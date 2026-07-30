@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MembersSidebar } from "@/components/members-sidebar";
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string };
@@ -73,7 +72,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Avatar className="size-8">
               <AvatarFallback className="bg-secondary text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <MembersSidebar />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out">
               <LogOut className="size-4" />
             </Button>

@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { attachStudentNames } from "@/lib/people";
 import { formatMinutes, hoursFrom, statusTone } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+function initialsFor(name: string) {
+  return (
+    name
+      .split(" ")
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?"
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/projects/$id")({
   head: () => ({
@@ -140,147 +153,152 @@ function ProjectDetail() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl">{project.title}</h1>
-          {project.description && (
-            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
+    <div className="lg:flex lg:items-start lg:gap-8">
+      <div className="min-w-0 flex-1 space-y-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl">{project.title}</h1>
+            {project.description && (
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={shareEvent}>
+              <Share2 className="mr-1.5 size-4" /> Share event
+            </Button>
+            <Button
+              size="sm"
+              variant={isJoined ? "ghost" : "default"}
+              onClick={() => toggleJoin.mutate(isJoined)}
+              disabled={toggleJoin.isPending}
+            >
+              {isJoined ? "Leave event" : "Join event"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-card p-5">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved hours</p>
+            <p className="mt-2 font-display text-3xl">{hoursFrom(approvedMins)}h</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">People enrolled</p>
+            <p className="mt-2 font-display text-3xl">{members.length}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Sessions logged</p>
+            <p className="mt-2 font-display text-3xl">{sessions.length}</p>
+          </div>
+        </div>
+
+        <section>
+          <h2 className="text-xl">Session history</h2>
+          {sessions.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">No sessions logged yet.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {sessions.map((s) => (
+                <li key={s.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-medium">{s.student_name}</span>
+                    <span
+                      className={`ml-auto rounded-full border px-2.5 py-0.5 text-xs capitalize ${statusTone(s.status)}`}
+                    >
+                      {s.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {new Date(s.check_in_at).toLocaleString()} · {formatMinutes(s.duration_minutes)}
+                  </p>
+                  {s.summary && <p className="mt-2 text-sm">{s.summary}</p>}
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={shareEvent}>
-            <Share2 className="mr-1.5 size-4" /> Share event
-          </Button>
-          <Button
-            size="sm"
-            variant={isJoined ? "ghost" : "default"}
-            onClick={() => toggleJoin.mutate(isJoined)}
-            disabled={toggleJoin.isPending}
-          >
-            {isJoined ? "Leave event" : "Join event"}
-          </Button>
-        </div>
+        </section>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved hours</p>
-          <p className="mt-2 font-display text-3xl">{hoursFrom(approvedMins)}h</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">People enrolled</p>
-          <p className="mt-2 font-display text-3xl">{members.length}</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Sessions logged</p>
-          <p className="mt-2 font-display text-3xl">{sessions.length}</p>
-        </div>
-      </div>
-
-      <section className="space-y-4">
+      <aside className="mt-8 w-full shrink-0 space-y-3 lg:sticky lg:top-20 lg:mt-0 lg:w-64">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl">Enrolled People &amp; Roles</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Members — {members.length}
+          </h2>
           {isAdmin && (
-            <span className="flex items-center text-xs text-muted-foreground">
-              <ShieldAlert className="mr-1 size-3.5" /> Admin controls active
+            <span title="Admin controls active">
+              <ShieldAlert className="size-3.5 text-muted-foreground" />
             </span>
           )}
         </div>
 
         {members.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
             No people enrolled yet. Share the event link above to invite participants!
           </p>
         ) : (
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <div className="divide-y divide-border">
-              {members.map((m) => (
-                <div
-                  key={m.student_id}
-                  className="flex flex-wrap items-center justify-between gap-3 p-4"
-                >
-                  <div>
-                    <p className="font-medium text-sm">
-                      {m.student_name} {m.student_id === user?.id && "(You)"}
-                    </p>
-                    {m.student_college_id && (
-                      <p className="text-xs text-muted-foreground">{m.student_college_id}</p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {isAdmin ? (
-                      <Select
-                        value={m.student_role}
-                        onValueChange={(newRole) =>
-                          updateRole.mutate({
-                            userId: m.student_id,
-                            newRole: newRole as "student" | "faculty" | "admin",
-                          })
-                        }
-                        disabled={updateRole.isPending}
-                      >
-                        <SelectTrigger className="h-8 w-32 text-xs capitalize">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="faculty">Faculty</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="rounded-full border border-border px-2.5 py-0.5 text-xs capitalize text-muted-foreground">
-                        {m.student_role}
-                      </span>
-                    )}
-
-                    {isFaculty && m.student_id !== user?.id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-destructive hover:bg-destructive/10"
-                        title="Remove member"
-                        onClick={() => removeMember.mutate(m.student_id)}
-                        disabled={removeMember.isPending}
-                      >
-                        <UserMinus className="size-4" />
-                      </Button>
-                    )}
-                  </div>
+          <div className="space-y-1 rounded-lg border border-border bg-card p-2">
+            {members.map((m) => (
+              <div
+                key={m.student_id}
+                className="flex items-center gap-2 rounded-md p-2 hover:bg-secondary"
+              >
+                <Avatar className="size-8 shrink-0">
+                  <AvatarFallback className="bg-secondary text-xs">
+                    {initialsFor(m.student_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {m.student_name} {m.student_id === user?.id && "(You)"}
+                  </p>
+                  {m.student_college_id && (
+                    <p className="truncate text-xs text-muted-foreground">{m.student_college_id}</p>
+                  )}
                 </div>
-              ))}
-            </div>
+
+                {isAdmin ? (
+                  <Select
+                    value={m.student_role}
+                    onValueChange={(newRole) =>
+                      updateRole.mutate({
+                        userId: m.student_id,
+                        newRole: newRole as "student" | "faculty" | "admin",
+                      })
+                    }
+                    disabled={updateRole.isPending}
+                  >
+                    <SelectTrigger className="h-7 w-[88px] shrink-0 text-xs capitalize">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="faculty">Faculty</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs capitalize text-muted-foreground">
+                    {m.student_role}
+                  </span>
+                )}
+
+                {isFaculty && m.student_id !== user?.id && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0 text-destructive hover:bg-destructive/10"
+                    title="Remove member"
+                    onClick={() => removeMember.mutate(m.student_id)}
+                    disabled={removeMember.isPending}
+                  >
+                    <UserMinus className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         )}
-      </section>
-
-      <section>
-        <h2 className="text-xl">Session history</h2>
-        {sessions.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No sessions logged yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-3">
-            {sessions.map((s) => (
-              <li key={s.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-medium">{s.student_name}</span>
-                  <span
-                    className={`ml-auto rounded-full border px-2.5 py-0.5 text-xs capitalize ${statusTone(s.status)}`}
-                  >
-                    {s.status}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(s.check_in_at).toLocaleString()} · {formatMinutes(s.duration_minutes)}
-                </p>
-                {s.summary && <p className="mt-2 text-sm">{s.summary}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </aside>
     </div>
   );
 }
