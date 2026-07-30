@@ -59,17 +59,17 @@ function ProjectsPage() {
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Give the event a title");
       if (role !== creatorRole) {
-        const { error: grantError } = await supabase.rpc("self_grant_role", {
-          target_role: creatorRole,
-        });
-        if (grantError) {
-          if (creatorRole === "faculty") {
+        try {
+          const { error: grantError } = await supabase.rpc("self_grant_role", {
+            target_role: creatorRole,
+          });
+          if (grantError) {
             await supabase.rpc("self_grant_faculty");
-          } else {
-            throw grantError;
           }
+        } catch {
+          await supabase.rpc("self_grant_faculty").catch(() => {});
         }
-        await refreshProfile();
+        await refreshProfile().catch(() => {});
       }
       const { error } = await supabase.from("projects").insert({
         title: form.title.trim(),
