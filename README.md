@@ -1,644 +1,174 @@
-# Research Connect
+# Research Connect (RAVS)
+
+> **Research Attendance & Verification System**  
+> A modern, full-stack digital platform for verifying academic research attendance, approving work sessions, and managing laboratory projects.
+
+---
+
+## 📌 Overview
+
+**Research Connect (RAVS)** replaces manual paper registers and spreadsheets in academic research labs. It allows students to log research hours with verified check-in/out timestamps, enables faculty to review and approve work submissions, and empowers administrators to generate semester attendance reports.
+
+### Key Goals
+
+- ⏱️ **Eliminate Manual Registers:** Digital check-in/check-out timers with automated session duration calculation.
+- 📝 **Work Verification:** Students attach rich descriptions and file proof (PDFs, images, documents) to sessions.
+- ✅ **Faculty Approvals:** Faculty review, approve, or reject sessions with custom remarks.
+- 📊 **Automated Attendance:** Calculate total verified research hours and generate percentage reports.
+- 🔐 **Role-Based Security:** Secure Row-Level Security (RLS) policies for **Student**, **Faculty**, and **Head Admin** roles.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend & UI
+
+- **Framework:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Routing:** [TanStack Router](https://tanstack.com/router) (File-based type-safe routing)
+- **State & Data Fetching:** [TanStack Query](https://tanstack.com/query)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/)
+- **Forms & Validation:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+- **Charts & Icons:** [Recharts](https://recharts.org/) + [Lucide React](https://lucide.dev/)
+
+### Backend & Database
+
+- **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL + Supabase Auth)
+- **Security:** PostgreSQL Row Level Security (RLS) + RBAC Triggers
+- **Email Delivery:** Custom SMTP via [Resend](https://resend.com)
+
+---
+
+## 👥 User Roles & Permissions
+
+| Feature / Action                     | Student | Faculty | Head Admin |
+| :----------------------------------- | :-----: | :-----: | :--------: |
+| **Check In / Check Out**             |   ✅    |   ❌    |     ❌     |
+| **Submit Work Proof & Files**        |   ✅    |   ❌    |     ❌     |
+| **View Personal Attendance & Hours** |   ✅    |   ✅    |     ✅     |
+| **Review & Approve/Reject Sessions** |   ❌    |   ✅    |     ✅     |
+| **Add Remarks to Submissions**       |   ❌    |   ✅    |     ✅     |
+| **Create & Archive Projects**        |   ❌    |   ✅    |     ✅     |
+| **Assign Faculty & Students**        |   ❌    |   ❌    |     ✅     |
+| **Manage Departments & Labs**        |   ❌    |   ❌    |     ✅     |
+| **Manage Users & Role Assignments**  |   ❌    |   ❌    |     ✅     |
+
+---
+
+## 📂 Project Architecture & Directory Structure
+
+```text
+research-connect-main/
+├── docs/                             # Comprehensive Documentation Guides
+│   ├── SUPABASE_GUIDE.md             # Supabase Schema, RLS & CLI setup
+│   └── SUPABASE_SMTP_RATE_LIMITS.md  # Resend SMTP & Auth Rate Limit Guide
+├── src/
+│   ├── components/                   # Reusable UI & Layout Components
+│   │   └── ui/                       # Radix UI + Tailwind primitives
+│   ├── hooks/                        # Custom React Hooks
+│   ├── lib/                          # Utility & Supabase Client instances
+│   ├── routes/                       # TanStack File-Based Routes
+│   │   ├── _authenticated/           # Protected App Routes
+│   │   │   ├── dashboard.tsx         # Dashboard per User Role
+│   │   │   ├── projects.index.tsx    # Projects Overview
+│   │   │   ├── projects.$id.tsx      # Project Workspace & Timer
+│   │   │   ├── approvals.tsx         # Faculty Review Queue
+│   │   │   ├── attendance.tsx        # Attendance Analytics & Reports
+│   │   │   └── profile.tsx           # User Profile Settings
+│   │   ├── auth.tsx                  # Sign In / Sign Up
+│   │   └── __root.tsx                # App Shell Layout
+│   ├── main.tsx                      # Vite Application Entrypoint
+│   └── styles.css                    # Tailwind CSS imports & theme definitions
+├── supabase/
+│   ├── migrations/                   # PostgreSQL Migration Scripts
+│   └── config.toml                   # Local Supabase CLI configuration
+├── .env                              # Environment Variables
+├── package.json                      # Project Dependencies & Scripts
+└── vite.config.ts                    # Vite Configuration
+```
+
+---
+
+## ⚡ Getting Started (Local Development)
+
+### 1. Prerequisites
+
+- **Node.js** `v18+` or **Bun** / **npm**
+- **Docker Desktop** _(Optional: Only if running Supabase CLI locally)_
+
+### 2. Installation
+
+Clone the repository and install dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/research-connect.git
+cd research-connect-main
 
-Product Requirements Document (PRD)
-
-Research Attendance & Verification System (RAVS)
-
-Version 2.0
-
-1. Overview
-
-Problem
-
-Most colleges still track research attendance manually through registers or spreadsheets. Faculty have no easy way to verify work, students cannot maintain a digital work history, and administrators struggle to generate reports.
-
-RAVS digitizes the entire research attendance process—from assigning projects to approving work sessions and generating attendance recommendations.
-
-2. Goals
-
-Eliminate paper-based attendance
-
-Digitally verify research work
-
-Maintain permanent work history
-
-Simplify faculty approvals
-
-Generate attendance recommendations
-
-Generate semester reports
-
-Manage projects and laboratories
-
-Support thousands of students
-
-3. Tech Stack
-
-Frontend
-
-Next.js 15
-
-TypeScript
-
-Tailwind CSS
-
-shadcn/ui
-
-React Hook Form
-
-Zod
-
-TanStack Query
-
-Zustand
-
-Backend
-
-No custom backend.
-
-Use only:
-
-Supabase Auth
-
-PostgreSQL
-
-Storage
-
-Realtime
-
-Row Level Security
-
-Edge Functions (optional)
-
-Deployment
-
-Netlify
-
-4. User Roles
-
-Student
-
-Permissions
-
-Login
-
-View projects
-
-View assigned faculty
-
-Check In
-
-Check Out
-
-Submit work
-
-Upload files
-
-View approval status
-
-View attendance
-
-View reports
-
-Edit profile
-
-Faculty
-
-Permissions
-
-Login
-
-View assigned students
-
-View projects
-
-Review submissions
-
-Approve sessions
-
-Reject sessions
-
-Add remarks
-
-Generate reports
-
-Manage project members
-
-Head Admin
-
-Permissions
-
-Everything
-
-Manage departments
-
-Manage laboratories
-
-Manage users
-
-Manage projects
-
-Assign faculty
-
-Assign students
-
-View analytics
-
-Export reports
-
-5. Features
-
-Authentication
-
-Features
-
-Email Login
-
-College ID Login
-
-Forgot Password
-
-Change Password
-
-Session Management
-
-Remember Me
-
-Role Detection
-
-Protected Routes
-
-Student Dashboard
-
-Widgets
-
-Active Projects
-
-Today's Status
-
-Current Session
-
-Pending Approvals
-
-Total Approved Hours
-
-Weekly Hours
-
-Attendance Percentage
-
-Recent Activity
-
-Faculty Dashboard
-
-Widgets
-
-Pending Reviews
-
-Active Projects
-
-Assigned Students
-
-Recent Activity
-
-Approval Statistics
-
-Quick Actions
-
-Admin Dashboard
-
-Widgets
-
-Total Students
-
-Total Faculty
-
-Total Departments
-
-Total Laboratories
-
-Active Projects
-
-Pending Approvals
-
-Attendance Analytics
-
-Recent Logins
-
-Project Management
-
-Features
-
-Create Project
-
-Edit Project
-
-Archive Project
-
-Delete Project
-
-Assign Faculty
-
-Assign Students
-
-Upload Documents
-
-Set Project Duration
-
-Project Timeline
-
-Project Status
-
-Department Management
-
-Features
-
-Create Department
-
-Edit Department
-
-Delete Department
-
-Search
-
-Filter
-
-Laboratory Management
-
-Features
-
-Create Lab
-
-Edit Lab
-
-Delete Lab
-
-Assign Faculty
-
-Assign Projects
-
-Student Workspace
-
-Features
-
-View Project Details
-
-View Objectives
-
-View Assigned Faculty
-
-View Documents
-
-Upload Work
-
-Work Timeline
-
-Session History
-
-Check In System
-
-Features
-
-Start Session
-
-Live Timer
-
-Prevent Multiple Sessions
-
-Auto Timestamp
-
-Session Notes
-
-Check Out System
-
-Features
-
-End Session
-
-Duration Calculation
-
-Submit Summary
-
-Upload Files
-
-Submit Session
-
-Work Submission
-
-Features
-
-Rich Text Description
-
-File Upload
-
-Image Upload
-
-PDF Upload
-
-Multiple Attachments
-
-Validation
-
-Save Draft
-
-Faculty Approval
-
-Features
-
-Pending Queue
-
-Session Details
-
-Download Attachments
-
-Approve
-
-Reject
-
-Add Remarks
-
-Approval History
-
-Attendance Module
-
-Features
-
-Daily Attendance
-
-Weekly Attendance
-
-Monthly Attendance
-
-Attendance Recommendation
-
-Eligible Hours
-
-Attendance Percentage
-
-Reports
-
-Generate
-
-Attendance Report
-
-Student Report
-
-Faculty Report
-
-Department Report
-
-Laboratory Report
-
-Project Report
-
-Semester Report
-
-Contribution Report
-
-Formats
-
-PDF
-
-CSV
-
-Analytics
-
-Charts
-
-Daily Activity
-
-Weekly Hours
-
-Department Statistics
-
-Faculty Statistics
-
-Project Completion
-
-Attendance Trends
-
-Notifications
-
-Approval Received
-
-Session Rejected
-
-New Project Assigned
-
-Reminder to Check Out
-
-Project Updates
-
-Search
-
-Global Search
-
-Search
-
-Students
-
-Faculty
-
-Projects
-
-Departments
-
-Laboratories
-
-Filters
-
-Department
-
-Faculty
-
-Project
-
-Date
-
-Status
-
-Semester
-
-Profile
-
-Features
-
-Edit Profile
-
-Change Password
-
-Profile Photo
-
-Contact Details
-
-Settings
-
-Theme
-
-Notifications
-
-Time Format
-
-Language
-
-Audit Logs
-
-Track
-
-Login
-
-Logout
-
-Check In
-
-Check Out
-
-Approval
-
-Rejection
-
-Project Assignment
-
-User Creation
-
-File Management
-
-Supported Files
-
-PDF
-
-DOCX
-
-PPT
-
-Images
-
-ZIP
-
-Storage
-
-Supabase Storage
-
-6. Database Tables
-
-users
-
-profiles
-
-departments
-
-laboratories
-
-faculty_assignments
-
-projects
-
-project_members
-
-work_sessions
-
-work_submissions
-
-approvals
-
-attendance_records
-
-reports
-
-notifications
-
-audit_logs
-
-files
-
-7. Security
-
-Supabase Authentication
-
-Role-Based Access Control
-
-Row Level Security (RLS)
-
-Secure Storage Policies
-
-Protected Routes
-
-Session Validation
-
-Input Validation
-
-File Type Validation
-
-8. Optional Future Features
-
-QR Code Check-In
-
-Geofencing
-
-Face Verification
-
-AI-generated Work Summaries
-
-AI Attendance Insights
-
-Email Notifications
-
-Push Notifications
-
-Google Calendar Integration
-
-Microsoft Teams Integration
-
-Dark Mode
-
-Mobile App (React Native)
-
-Offline Sync
-
-Research Milestones
-
-Supervisor Comments
-
-Version History
-
-Real-time Collaboration
-
-Folder Structure
-
-app/
-components/
-features/
-hooks/
-lib/
-types/
-utils/
-public/
-
-supabase/
-├── migrations/
-├── functions/
-├── seed.sql
-
-storage/
-
-Deployment
-
-Frontend hosted on Netlify
-
-Authentication via Supabase Auth
-
-Database hosted on Supabase PostgreSQL
-
-Files stored in Supabase Storage
-
-Authorization enforced using Row Level Security (RLS)
-
-Optional business logic handled with Supabase Edge Functions
-
-## Development
-
-To run locally:
-
-```sh
+# Install dependencies
 npm install
+```
+
+### 3. Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+SUPABASE_PROJECT_ID="your_supabase_project_id"
+SUPABASE_PUBLISHABLE_KEY="your_supabase_publishable_key"
+SUPABASE_URL="https://your_supabase_project_id.supabase.co"
+
+VITE_SUPABASE_PROJECT_ID="your_supabase_project_id"
+VITE_SUPABASE_PUBLISHABLE_KEY="your_supabase_publishable_key"
+VITE_SUPABASE_URL="https://your_supabase_project_id.supabase.co"
+```
+
+### 4. Start Development Server
+
+```bash
 npm run dev
 ```
+
+Open your browser at `http://localhost:5173`.
+
+---
+
+## 🗄️ Database & Security Setup
+
+The application connects to Supabase PostgreSQL. Database tables and security policies are applied via migration files in `supabase/migrations/`.
+
+To apply pending database migrations to your cloud instance:
+
+```bash
+# Link local CLI to Supabase Cloud
+npx supabase link --project-ref your_supabase_project_id
+
+# Push database schema migrations
+npx supabase db push
+```
+
+---
+
+## 📧 Email & Rate Limits Configuration
+
+To prevent signup rate-limiting (`429 Too Many Requests`), the project uses **Resend Custom SMTP**:
+
+- **Host:** `smtp.resend.com`
+- **Port:** `465` (SSL/TLS)
+- **Username:** `resend`
+- **Email Rate Limit:** Set to `300` emails/hr in Supabase Dashboard.
+
+For step-by-step instructions on managing rate limits and email delivery, see [docs/SUPABASE_SMTP_RATE_LIMITS.md](docs/SUPABASE_SMTP_RATE_LIMITS.md).
+
+---
+
+## 📖 Additional Documentation
+
+- 🏗️ [Complete System Architecture & Developer Guide](docs/PROJECT_ARCHITECTURE.md)
+- 📚 [Complete Supabase Setup & Architecture Guide](docs/SUPABASE_GUIDE.md)
+- ✉️ [Supabase Auth Rate Limits & Resend SMTP Setup Guide](docs/SUPABASE_SMTP_RATE_LIMITS.md)
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

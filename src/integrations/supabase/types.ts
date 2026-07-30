@@ -203,6 +203,13 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_update_user_role: {
+        Args: {
+          target_user_id: string;
+          new_role: Database["public"]["Enums"]["app_role"];
+        };
+        Returns: void;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

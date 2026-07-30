@@ -7,13 +7,22 @@ import { useAuth } from "@/lib/auth";
 import { attachStudentNames } from "@/lib/people";
 import { formatMinutes, hoursFrom, statusTone } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/projects/$id")({
   head: () => ({
     meta: [
       { title: "Event — RAVS" },
-      { name: "description", content: "Event details, roster, roles and logged research sessions." },
+      {
+        name: "description",
+        content: "Event details, roster, roles and logged research sessions.",
+      },
       { property: "og:title", content: "Event — RAVS" },
       { property: "og:description", content: "Roster and verified session history." },
     ],
@@ -78,7 +87,13 @@ function ProjectDetail() {
   });
 
   const updateRole = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "student" | "faculty" | "admin" }) => {
+    mutationFn: async ({
+      userId,
+      newRole,
+    }: {
+      userId: string;
+      newRole: "student" | "faculty" | "admin";
+    }) => {
       const { error } = await supabase.rpc("admin_update_user_role", {
         target_user_id: userId,
         new_role: newRole,
@@ -186,7 +201,10 @@ function ProjectDetail() {
           <div className="rounded-lg border border-border bg-card overflow-hidden">
             <div className="divide-y divide-border">
               {members.map((m) => (
-                <div key={m.student_id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div
+                  key={m.student_id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-4"
+                >
                   <div>
                     <p className="font-medium text-sm">
                       {m.student_name} {m.student_id === user?.id && "(You)"}

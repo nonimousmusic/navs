@@ -59,8 +59,16 @@ function ProjectsPage() {
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Give the event a title");
       if (!isFaculty) {
-        await supabase.rpc("self_grant_faculty").catch(() => {});
-        await refreshProfile().catch(() => {});
+        try {
+          await supabase.rpc("self_grant_faculty");
+        } catch {
+          // ignore error if role self-grant fails
+        }
+        try {
+          await refreshProfile();
+        } catch {
+          // ignore profile refresh error
+        }
       }
       const { error } = await supabase.from("projects").insert({
         title: form.title.trim(),
@@ -164,7 +172,11 @@ function ProjectsPage() {
                   maxLength={1000}
                 />
               </div>
-              <Button className="w-full" onClick={() => create.mutate()} disabled={create.isPending}>
+              <Button
+                className="w-full"
+                onClick={() => create.mutate()}
+                disabled={create.isPending}
+              >
                 Create event
               </Button>
             </div>

@@ -69,7 +69,9 @@ function AuthPage() {
             toast.success("Signed in to your account.");
             return navigate({ to: "/dashboard", replace: true });
           }
-          return toast.error("Signup limit reached on Supabase. Please sign in with your password or use Google.");
+          return toast.error(
+            "Signup limit reached on Supabase. Please sign in with your password or use Google.",
+          );
         }
         return toast.error(error.message);
       }
