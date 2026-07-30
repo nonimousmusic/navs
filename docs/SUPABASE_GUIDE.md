@@ -71,7 +71,9 @@ Data security is enforced using PostgreSQL **Row Level Security (RLS)** policies
 ### Key Security Functions
 
 - **`admin_update_user_role`**: SQL function allowing head administrators to update user roles securely without privilege escalation risks.
-- **RLS Enforcements:** Students can only read/write their own `work_sessions` and `work_submissions`. Faculty can only inspect sessions for students assigned to their projects.
+- **`self_grant_faculty`**: Allows users creating events to switch to faculty role, automatically cleaning up any duplicate `user_roles` entries so role queries remain single-value and accurate.
+- **`handle_new_user`**: Exception-safe trigger on `auth.users` that automatically populates `public.profiles` and sets initial user roles upon signup.
+- **RLS Enforcements:** Students can only read/write their own `work_sessions` and `work_submissions`. Faculty can inspect work sessions and submissions for students assigned to their events. Admins have full oversight.
 
 ---
 

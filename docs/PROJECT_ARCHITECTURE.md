@@ -49,15 +49,41 @@ src/
 User authentication is managed via Supabase Auth. Profiles and permissions are linked to `auth.users(id)`:
 
 ```sql
-CREATE TYPE user_role AS ENUM ('student', 'faculty', 'head_admin');
+CREATE TYPE public.app_role AS ENUM ('student', 'faculty', 'admin');
 
 CREATE TABLE public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name TEXT NOT NULL,
-    college_id TEXT UNIQUE NOT NULL,
-    role user_role NOT NULL DEFAULT 'student',
-    department_id UUID REFERENCES public.departments(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    full_name TEXT NOT NULL DEFAULT '',
+    college_id TEXT,
+    department TEXT,
+    phone TEXT,
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.user_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    role public.app_role NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, role)
+);
+
+CREATE TABLE public.work_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    file_path TEXT,
+    file_name TEXT,
+    file_size INTEGER,
+    status public.session_status NOT NULL DEFAULT 'pending',
+    remarks TEXT,
+    reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -65,17 +91,17 @@ CREATE TABLE public.profiles (
 
 1. **Student:**
    - Starts active research timer on [projects.$id.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/projects.$id.tsx).
-   - On check-out, submits summary notes and attached proof files.
+   - Submits work notes and attached file proofs (PDFs, images, ZIPs) per event.
    - Views approved hours and attendance breakdown on [attendance.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/attendance.tsx).
 
 2. **Faculty:**
-   - Inspects pending queue on [approvals.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/approvals.tsx).
-   - Reviews student work notes and attached documents.
-   - Approves session (calculating verified research hours) or rejects with remarks.
+   - Inspects pending session and submission queue on [approvals.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/approvals.tsx).
+   - Reviews student work notes, downloads submitted documents, and approves/rejects with remarks.
+   - Creates research events and manages event settings.
 
 3. **Head Admin:**
-   - Manages departments, laboratories, users, and project assignments.
-   - Updates user roles via secure `admin_update_user_role` database functions.
+   - Full visibility across events, rosters, and user permissions.
+   - Updates user roles via secure `admin_update_user_role` and `self_grant_faculty` RPC functions (with automated duplicate role cleanup).
 
 ---
 

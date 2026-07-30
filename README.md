@@ -12,8 +12,9 @@
 ### Key Goals
 
 - ⏱️ **Eliminate Manual Registers:** Digital check-in/check-out timers with automated session duration calculation.
-- 📝 **Work Verification:** Students attach rich descriptions and file proof (PDFs, images, documents) to sessions.
-- ✅ **Faculty Approvals:** Faculty review, approve, or reject sessions with custom remarks.
+- 📝 **Work Verification & File Submissions:** Students submit rich work notes and upload document proof (PDFs, images, ZIPs) for faculty review.
+- 👥 **Event Members & Role Management:** Discord-style event roster sidebar with live admin role updates.
+- ✅ **Faculty Approvals:** Faculty review, approve, or reject sessions and submitted files with custom remarks.
 - 📊 **Automated Attendance:** Calculate total verified research hours and generate percentage reports.
 - 🔐 **Role-Based Security:** Secure Row-Level Security (RLS) policies for **Student**, **Faculty**, and **Head Admin** roles.
 
@@ -34,6 +35,7 @@
 
 - **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL + Supabase Auth)
 - **Security:** PostgreSQL Row Level Security (RLS) + RBAC Triggers
+- **Storage:** Supabase Storage Bucket (`work-submissions`)
 - **Email Delivery:** Custom SMTP via [Resend](https://resend.com)
 
 ---
@@ -43,14 +45,13 @@
 | Feature / Action                     | Student | Faculty | Head Admin |
 | :----------------------------------- | :-----: | :-----: | :--------: |
 | **Check In / Check Out**             |   ✅    |   ❌    |     ❌     |
-| **Submit Work Proof & Files**        |   ✅    |   ❌    |     ❌     |
+| **Submit Work Proof & Attachments**  |   ✅    |   ❌    |     ❌     |
 | **View Personal Attendance & Hours** |   ✅    |   ✅    |     ✅     |
 | **Review & Approve/Reject Sessions** |   ❌    |   ✅    |     ✅     |
-| **Add Remarks to Submissions**       |   ❌    |   ✅    |     ✅     |
-| **Create & Archive Projects**        |   ❌    |   ✅    |     ✅     |
-| **Assign Faculty & Students**        |   ❌    |   ❌    |     ✅     |
-| **Manage Departments & Labs**        |   ❌    |   ❌    |     ✅     |
-| **Manage Users & Role Assignments**  |   ❌    |   ❌    |     ✅     |
+| **Review & Download Submissions**    |   ❌    |   ✅    |     ✅     |
+| **Create & Archive Events**          |   ❌    |   ✅    |     ✅     |
+| **Manage Roster Roles in Events**    |   ❌    |   ❌    |     ✅     |
+| **Manage Users & Global Roles**      |   ❌    |   ❌    |     ✅     |
 
 ---
 
