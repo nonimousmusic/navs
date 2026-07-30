@@ -34,7 +34,8 @@ function ProjectDetail() {
   const { id } = Route.useParams();
   const { user, role } = useAuth();
   const qc = useQueryClient();
-  const isAdminOrFaculty = role === "admin" || role === "faculty";
+  const isFaculty = role === "admin" || role === "faculty";
+  const isAdmin = role === "admin";
 
   const { data, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -98,13 +99,7 @@ function ProjectDetail() {
         target_user_id: userId,
         new_role: newRole,
       });
-      if (error) {
-        // Fallback upsert
-        const { error: upsertErr } = await supabase
-          .from("user_roles")
-          .upsert({ user_id: userId, role: newRole });
-        if (upsertErr) throw upsertErr;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Member role updated");
@@ -186,7 +181,7 @@ function ProjectDetail() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl">Enrolled People &amp; Roles</h2>
-          {isAdminOrFaculty && (
+          {isAdmin && (
             <span className="flex items-center text-xs text-muted-foreground">
               <ShieldAlert className="mr-1 size-3.5" /> Admin controls active
             </span>
@@ -215,7 +210,7 @@ function ProjectDetail() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {isAdminOrFaculty ? (
+                    {isAdmin ? (
                       <Select
                         value={m.student_role}
                         onValueChange={(newRole) =>
@@ -241,7 +236,7 @@ function ProjectDetail() {
                       </span>
                     )}
 
-                    {isAdminOrFaculty && m.student_id !== user?.id && (
+                    {isFaculty && m.student_id !== user?.id && (
                       <Button
                         variant="ghost"
                         size="icon"

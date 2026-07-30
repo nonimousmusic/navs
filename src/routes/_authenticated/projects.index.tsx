@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -35,9 +34,6 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const isFaculty = role === "faculty" || role === "admin";
   const [open, setOpen] = useState(false);
-  const [creatorRole, setCreatorRole] = useState<"faculty" | "admin">(
-    role === "admin" ? "admin" : "faculty",
-  );
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -132,27 +128,11 @@ function ProjectsPage() {
               <DialogTitle>Create event</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Your role for this event</Label>
-                <RadioGroup
-                  value={creatorRole}
-                  onValueChange={(v) => setCreatorRole(v as "faculty" | "admin")}
-                  className="flex gap-6 pt-1"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="faculty" id="creator-faculty" />
-                    <Label htmlFor="creator-faculty" className="font-normal cursor-pointer">
-                      Faculty
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="admin" id="creator-admin" />
-                    <Label htmlFor="creator-admin" className="font-normal cursor-pointer">
-                      Admin
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+              {!isFaculty && (
+                <p className="text-xs text-muted-foreground">
+                  Creating an event makes you Faculty so you can supervise it.
+                </p>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
