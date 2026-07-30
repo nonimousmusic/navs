@@ -70,9 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!roleRow) {
         try {
-          await supabase.from("user_roles").upsert({ user_id: userId, role: "student" });
+          await supabase.rpc("ensure_own_student_role");
         } catch {
-          // ignore upsert fallback error
+          // ignore rpc fallback error
         }
         roleRow = { role: "student" };
       }
