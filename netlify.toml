@@ -1,12 +1,6 @@
 [build]
   command = "npm run build"
-  publish = "dist"
+  publish = "dist/client"
 
 [build.environment]
   NODE_VERSION = "20"
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions-internal/server"
-  status = 200
-  force = false
