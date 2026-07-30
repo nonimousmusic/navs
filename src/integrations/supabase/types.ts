@@ -136,6 +136,56 @@ export type Database = {
         };
         Relationships: [];
       };
+      submissions: {
+        Row: {
+          comment: string | null;
+          created_at: string;
+          faculty_comment: string | null;
+          file_name: string;
+          file_path: string;
+          id: string;
+          project_id: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: Database["public"]["Enums"]["submission_status"];
+          student_id: string;
+        };
+        Insert: {
+          comment?: string | null;
+          created_at?: string;
+          faculty_comment?: string | null;
+          file_name: string;
+          file_path: string;
+          id?: string;
+          project_id: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["submission_status"];
+          student_id: string;
+        };
+        Update: {
+          comment?: string | null;
+          created_at?: string;
+          faculty_comment?: string | null;
+          file_name?: string;
+          file_path?: string;
+          id?: string;
+          project_id?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["submission_status"];
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "submissions_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       work_sessions: {
         Row: {
           check_in_at: string;
@@ -230,6 +280,7 @@ export type Database = {
       app_role: "student" | "faculty" | "admin";
       project_status: "active" | "completed" | "archived";
       session_status: "active" | "pending" | "approved" | "rejected";
+      submission_status: "pending" | "approved" | "rejected";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -354,6 +405,7 @@ export const Constants = {
       app_role: ["student", "faculty", "admin"],
       project_status: ["active", "completed", "archived"],
       session_status: ["active", "pending", "approved", "rejected"],
+      submission_status: ["pending", "approved", "rejected"],
     },
   },
 } as const;

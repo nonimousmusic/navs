@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Share2, UserMinus, ShieldAlert } from "lucide-react";
+import { Share2, UserMinus, ShieldAlert, Paperclip, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { attachStudentNames } from "@/lib/people";
 import { formatMinutes, hoursFrom, statusTone } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -137,6 +140,83 @@ function ProjectDetail() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadComment, setUploadComment] = useState("");
+  const [reviewComments, setReviewComments] = useState<Record<string, string>>({});
+
+  const { data: submissions } = useQuery({
+    queryKey: ["submissions", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select("*")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return attachStudentNames(data ?? []);
+    },
+  });
+
+  const upload = useMutation({
+    mutationFn: async () => {
+      if (!uploadFile) throw new Error("Choose a file to upload");
+      const path = `${user!.id}/${id}/${Date.now()}-${uploadFile.name}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("submissions")
+        .upload(path, uploadFile);
+      if (uploadErr) throw uploadErr;
+      const { error } = await supabase.from("submissions").insert({
+        project_id: id,
+        student_id: user!.id,
+        file_path: path,
+        file_name: uploadFile.name,
+        comment: uploadComment.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setUploadFile(null);
+      setUploadComment("");
+      toast.success("Uploaded for review");
+      qc.invalidateQueries({ queryKey: ["submissions", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const review = useMutation({
+    mutationFn: async ({
+      submissionId,
+      status,
+    }: {
+      submissionId: string;
+      status: "approved" | "rejected";
+    }) => {
+      const { error } = await supabase
+        .from("submissions")
+        .update({
+          status,
+          faculty_comment: (reviewComments[submissionId] ?? "").trim() || null,
+          reviewed_by: user!.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", submissionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Submission reviewed");
+      qc.invalidateQueries({ queryKey: ["submissions", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function viewFile(filePath: string) {
+    const { data, error } = await supabase.storage
+      .from("submissions")
+      .createSignedUrl(filePath, 60);
+    if (error) return toast.error(error.message);
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading project…</p>;
   if (!data?.project) return <p className="text-sm text-muted-foreground">Event not found.</p>;
 
@@ -191,6 +271,97 @@ function ProjectDetail() {
             <p className="mt-2 font-display text-3xl">{sessions.length}</p>
           </div>
         </div>
+
+        <section className="space-y-4">
+          <h2 className="text-xl">Submissions</h2>
+
+          {isJoined && (
+            <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+              <Input type="file" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
+              <Textarea
+                rows={2}
+                placeholder="Add a comment about this upload…"
+                value={uploadComment}
+                onChange={(e) => setUploadComment(e.target.value)}
+                maxLength={1000}
+              />
+              <Button
+                size="sm"
+                onClick={() => upload.mutate()}
+                disabled={upload.isPending || !uploadFile}
+              >
+                <Paperclip className="mr-1.5 size-4" /> Upload for review
+              </Button>
+            </div>
+          )}
+
+          {(submissions ?? []).length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+              No submissions yet.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {(submissions ?? []).map((s) => (
+                <li key={s.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-medium">{s.student_name}</span>
+                    <button
+                      onClick={() => viewFile(s.file_path)}
+                      className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                    >
+                      <Paperclip className="size-3.5" /> {s.file_name}
+                    </button>
+                    <span
+                      className={`ml-auto rounded-full border px-2.5 py-0.5 text-xs capitalize ${statusTone(s.status)}`}
+                    >
+                      {s.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {new Date(s.created_at).toLocaleString()}
+                  </p>
+                  {s.comment && <p className="mt-2 text-sm">{s.comment}</p>}
+                  {s.faculty_comment && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Faculty: {s.faculty_comment}
+                    </p>
+                  )}
+
+                  {isFaculty && s.status === "pending" && (
+                    <div className="mt-3 space-y-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="Leave a comment (optional)"
+                        value={reviewComments[s.id] ?? ""}
+                        onChange={(e) =>
+                          setReviewComments({ ...reviewComments, [s.id]: e.target.value })
+                        }
+                        maxLength={1000}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => review.mutate({ submissionId: s.id, status: "approved" })}
+                          disabled={review.isPending}
+                        >
+                          <Check className="mr-1.5 size-4" /> Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => review.mutate({ submissionId: s.id, status: "rejected" })}
+                          disabled={review.isPending}
+                        >
+                          <X className="mr-1.5 size-4" /> Reject
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section>
           <h2 className="text-xl">Session history</h2>
