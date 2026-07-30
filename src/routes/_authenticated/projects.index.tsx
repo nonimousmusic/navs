@@ -58,17 +58,8 @@ function ProjectsPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Give the event a title");
-      if (role !== creatorRole) {
-        try {
-          const { error: grantError } = await supabase.rpc("self_grant_role", {
-            target_role: creatorRole,
-          });
-          if (grantError) {
-            await supabase.rpc("self_grant_faculty");
-          }
-        } catch {
-          await supabase.rpc("self_grant_faculty").catch(() => {});
-        }
+      if (!isFaculty) {
+        await supabase.rpc("self_grant_faculty").catch(() => {});
         await refreshProfile().catch(() => {});
       }
       const { error } = await supabase.from("projects").insert({
