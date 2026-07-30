@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const items: NavItem[] = [
     { to: "/dashboard", label: "Dashboard" },
-    { to: "/projects", label: "Projects" },
+    { to: "/projects", label: "Events" },
     ...(role === "faculty" || role === "admin"
       ? [{ to: "/approvals", label: "Approvals" }]
       : [{ to: "/attendance", label: "Attendance" }]),

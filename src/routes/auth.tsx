@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,7 +30,6 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [collegeId, setCollegeId] = useState("");
   const [department, setDepartment] = useState("");
-  const [role, setRole] = useState("student");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard", replace: true });
@@ -55,7 +53,7 @@ function AuthPage() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { full_name: fullName, college_id: collegeId, department, role },
+          data: { full_name: fullName, college_id: collegeId, department },
         },
       });
       setBusy(false);
@@ -70,16 +68,6 @@ function AuthPage() {
       setBusy(false);
       toast.error(err instanceof Error ? err.message : "Sign up failed");
     }
-  }
-
-  async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) return toast.error(error.message || "Google sign-in failed");
   }
 
   return (
@@ -177,42 +165,12 @@ function AuthPage() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>I am a</Label>
-                  <RadioGroup value={role} onValueChange={setRole} className="flex gap-6 pt-1">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="student" id="r-student" />
-                      <Label htmlFor="r-student" className="font-normal">
-                        Student
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="faculty" id="r-faculty" />
-                      <Label htmlFor="r-faculty" className="font-normal">
-                        Faculty
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   Create account
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            or
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={google}>
-            Continue with Google
-          </Button>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Google sign-in creates a student account by default.
-          </p>
         </div>
       </div>
     </div>

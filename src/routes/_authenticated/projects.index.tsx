@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -20,20 +21,23 @@ import {
 export const Route = createFileRoute("/_authenticated/projects/")({
   head: () => ({
     meta: [
-      { title: "Projects — RAVS" },
-      { name: "description", content: "Research projects, rosters and supervising faculty." },
-      { property: "og:title", content: "Projects — RAVS" },
-      { property: "og:description", content: "Browse and join research projects." },
+      { title: "Events — RAVS" },
+      { name: "description", content: "Research events, rosters and supervising faculty." },
+      { property: "og:title", content: "Events — RAVS" },
+      { property: "og:description", content: "Browse and join research events." },
     ],
   }),
   component: ProjectsPage,
 });
 
 function ProjectsPage() {
-  const { user, role } = useAuth();
+  const { user, role, refreshProfile } = useAuth();
   const qc = useQueryClient();
   const isFaculty = role === "faculty" || role === "admin";
   const [open, setOpen] = useState(false);
+  const [creatorRole, setCreatorRole] = useState<"student" | "faculty">(
+    isFaculty ? "faculty" : "student",
+  );
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -56,7 +60,12 @@ function ProjectsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.title.trim()) throw new Error("Give the project a title");
+      if (!form.title.trim()) throw new Error("Give the event a title");
+      if (creatorRole === "faculty" && !isFaculty) {
+        const { error: grantError } = await supabase.rpc("self_grant_faculty");
+        if (grantError) throw grantError;
+        await refreshProfile();
+      }
       const { error } = await supabase.from("projects").insert({
         title: form.title.trim(),
         description: form.description || null,
@@ -70,7 +79,7 @@ function ProjectsPage() {
     onSuccess: () => {
       setOpen(false);
       setForm({ title: "", description: "", objectives: "", lab_name: "", required_hours: "60" });
-      toast.success("Project created");
+      toast.success("Event created");
       qc.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -103,94 +112,120 @@ function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl">Projects</h1>
+          <h1 className="text-3xl">Events</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isFaculty
-              ? "Projects you supervise and everything running in the department."
-              : "Join a project to start logging verified research work."}
+              ? "Events you supervise and everything running in the department."
+              : "Join an event to start logging verified research work."}
           </p>
         </div>
 
-        {isFaculty && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="size-4" /> New project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create project</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    maxLength={140}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="desc">Description</Label>
-                  <Textarea
-                    id="desc"
-                    rows={3}
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    maxLength={1000}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="obj">Objectives</Label>
-                  <Textarea
-                    id="obj"
-                    rows={3}
-                    value={form.objectives}
-                    onChange={(e) => setForm({ ...form, objectives: e.target.value })}
-                    maxLength={1000}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="lab">Laboratory</Label>
-                    <Input
-                      id="lab"
-                      value={form.lab_name}
-                      onChange={(e) => setForm({ ...form, lab_name: e.target.value })}
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hours">Required hours</Label>
-                    <Input
-                      id="hours"
-                      type="number"
-                      min={1}
-                      value={form.required_hours}
-                      onChange={(e) => setForm({ ...form, required_hours: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={() => create.mutate()}
-                  disabled={create.isPending}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="size-4" /> New event
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create event</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Your role for this event</Label>
+                <RadioGroup
+                  value={creatorRole}
+                  onValueChange={(v) => setCreatorRole(v as "student" | "faculty")}
+                  className="flex gap-6 pt-1"
                 >
-                  Create project
-                </Button>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="student" id="creator-student" />
+                    <Label htmlFor="creator-student" className="font-normal">
+                      Student
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="faculty" id="creator-faculty" />
+                    <Label htmlFor="creator-faculty" className="font-normal">
+                      Faculty
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {creatorRole === "student" && !isFaculty && (
+                  <p className="text-xs text-muted-foreground">
+                    Creating and supervising an event requires the Faculty role. Select Faculty
+                    above to continue — this upgrades your account.
+                  </p>
+                )}
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  maxLength={140}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="desc">Description</Label>
+                <Textarea
+                  id="desc"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="obj">Objectives</Label>
+                <Textarea
+                  id="obj"
+                  rows={3}
+                  value={form.objectives}
+                  onChange={(e) => setForm({ ...form, objectives: e.target.value })}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="lab">Laboratory</Label>
+                  <Input
+                    id="lab"
+                    value={form.lab_name}
+                    onChange={(e) => setForm({ ...form, lab_name: e.target.value })}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hours">Required hours</Label>
+                  <Input
+                    id="hours"
+                    type="number"
+                    min={1}
+                    value={form.required_hours}
+                    onChange={(e) => setForm({ ...form, required_hours: e.target.value })}
+                  />
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => create.mutate()}
+                disabled={create.isPending || (creatorRole === "student" && !isFaculty)}
+              >
+                Create event
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading projects…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Loading events…</p>}
 
       {projects && projects.length === 0 && (
         <p className="rounded-lg border border-dashed border-border p-8 text-sm text-muted-foreground">
-          No projects yet. {isFaculty ? "Create the first one." : "Ask your faculty to create one."}
+          No events yet.{" "}
+          {isFaculty ? "Create the first one." : "Create one or ask your faculty to."}
         </p>
       )}
 
@@ -230,7 +265,7 @@ function ProjectsPage() {
                     onClick={() => toggleEnroll.mutate({ projectId: p.id, joined })}
                     disabled={toggleEnroll.isPending}
                   >
-                    {joined ? "Leave" : "Join project"}
+                    {joined ? "Leave" : "Join event"}
                   </Button>
                 )}
               </div>

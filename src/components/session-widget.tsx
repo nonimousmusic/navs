@@ -60,7 +60,7 @@ export function SessionWidget() {
 
   const checkIn = useMutation({
     mutationFn: async () => {
-      if (!projectId) throw new Error("Pick a project first");
+      if (!projectId) throw new Error("Pick an event first");
       const { error } = await supabase.from("work_sessions").insert({
         project_id: projectId,
         student_id: user!.id,
@@ -139,15 +139,15 @@ export function SessionWidget() {
 
       {memberships && memberships.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">
-          You aren't enrolled in a project yet. Open Projects and join one to start logging work.
+          You aren't enrolled in an event yet. Open Events and join one to start logging work.
         </p>
       ) : (
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            <Label>Project</Label>
+            <Label>Event</Label>
             <Select value={projectId} onValueChange={setProjectId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
+                <SelectValue placeholder="Select an event" />
               </SelectTrigger>
               <SelectContent>
                 {(memberships ?? []).map((m) => (

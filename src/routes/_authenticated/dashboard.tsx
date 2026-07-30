@@ -148,7 +148,7 @@ function FacultyView() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Pending reviews" value={String(pending.length)} hint="Needs your decision" />
         <Stat
-          label="Active projects"
+          label="Active events"
           value={String((data?.projects ?? []).filter((p) => p.status === "active").length)}
         />
         <Stat label="Assigned students" value={String(data?.students ?? 0)} />
@@ -203,7 +203,7 @@ export function SessionList({
       {sessions.map((s) => (
         <li key={s.id} className="rounded-lg border border-border bg-card p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-medium">{s.projects?.title ?? "Project"}</span>
+            <span className="font-medium">{s.projects?.title ?? "Event"}</span>
             {showStudent && s.student_name && (
               <span className="text-sm text-muted-foreground">{s.student_name}</span>
             )}

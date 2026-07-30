@@ -7,9 +7,9 @@ import { formatMinutes, hoursFrom, statusTone } from "@/lib/session-utils";
 export const Route = createFileRoute("/_authenticated/projects/$id")({
   head: () => ({
     meta: [
-      { title: "Project — RAVS" },
-      { name: "description", content: "Project objectives, roster and logged research sessions." },
-      { property: "og:title", content: "Project — RAVS" },
+      { title: "Event — RAVS" },
+      { name: "description", content: "Event objectives, roster and logged research sessions." },
+      { property: "og:title", content: "Event — RAVS" },
       { property: "og:description", content: "Roster and verified session history." },
     ],
   }),
@@ -47,7 +47,7 @@ function ProjectDetail() {
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading project…</p>;
-  if (!data?.project) return <p className="text-sm text-muted-foreground">Project not found.</p>;
+  if (!data?.project) return <p className="text-sm text-muted-foreground">Event not found.</p>;
 
   const { project, members, sessions } = data;
   const approvedMins = sessions
@@ -58,7 +58,7 @@ function ProjectDetail() {
     <div className="space-y-8">
       <div>
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {project.lab_name || "Research project"}
+          {project.lab_name || "Research event"}
         </p>
         <h1 className="mt-1 text-3xl">{project.title}</h1>
         {project.description && (

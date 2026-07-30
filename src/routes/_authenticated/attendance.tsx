@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/attendance")({
       { title: "Attendance — RAVS" },
       { name: "description", content: "Verified research hours and attendance recommendations." },
       { property: "og:title", content: "Attendance — RAVS" },
-      { property: "og:description", content: "Hours approved against project requirements." },
+      { property: "og:description", content: "Hours approved against event requirements." },
     ],
   }),
   component: Attendance,
@@ -66,7 +66,7 @@ function Attendance() {
     const key = isFaculty ? `${s.project_id}:${s.student_id}` : s.project_id;
     const g = groups.get(key) ?? {
       key,
-      label: isFaculty ? s.student_name : (project?.title ?? "Project"),
+      label: isFaculty ? s.student_name : (project?.title ?? "Event"),
       sub: isFaculty ? (project?.title ?? "") : `${project?.required_hours ?? 60}h required`,
       required: project?.required_hours ?? 60,
       approved: 0,
@@ -84,7 +84,7 @@ function Attendance() {
       <div>
         <h1 className="text-3xl">Attendance</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Attendance is calculated from faculty-approved hours against required project hours.
+          Attendance is calculated from faculty-approved hours against required event hours.
         </p>
       </div>
 

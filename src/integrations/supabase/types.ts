@@ -210,6 +210,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      self_grant_faculty: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: "student" | "faculty" | "admin";
