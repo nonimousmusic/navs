@@ -8,6 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Supabase's signup endpoint can hang indefinitely server-side (e.g. a stuck
+// confirmation-email send) instead of returning an error, which otherwise
+// leaves the form looking like the button did nothing at all.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("The server didn't respond in time. Please try again.")),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
@@ -37,10 +59,18 @@ function AuthPage() {
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    navigate({ to: "/dashboard", replace: true });
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        15000,
+      );
+      if (error) return toast.error(error.message);
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign in failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function signUp(e: React.FormEvent) {
@@ -51,18 +81,21 @@ function AuthPage() {
       const cleanName = fullName.trim();
       const cleanCollege = college.trim();
 
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            full_name: cleanName,
-            college_id: cleanCollege,
-            college: cleanCollege,
+      const { data, error } = await withTimeout(
+        supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: {
+              full_name: cleanName,
+              college_id: cleanCollege,
+              college: cleanCollege,
+            },
           },
-        },
-      });
+        }),
+        15000,
+      );
 
       if (error) {
         setBusy(false);
@@ -77,10 +110,10 @@ function AuthPage() {
           errMsg.includes("too many");
 
         if (isUserExists) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password,
-          });
+          const { error: signInErr } = await withTimeout(
+            supabase.auth.signInWithPassword({ email: cleanEmail, password }),
+            15000,
+          );
           if (!signInErr) {
             toast.success("Account already exists — signed in!");
             return navigate({ to: "/dashboard", replace: true });
@@ -96,10 +129,10 @@ function AuthPage() {
       }
 
       if (!data.session && data.user) {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password,
-        });
+        const { error: signInErr } = await withTimeout(
+          supabase.auth.signInWithPassword({ email: cleanEmail, password }),
+          15000,
+        );
         setBusy(false);
         if (!signInErr) {
           toast.success("Account created — signed in!");
