@@ -70,7 +70,9 @@ function ProjectDetail() {
         <div className="rounded-lg border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved hours</p>
           <p className="mt-2 font-display text-3xl">{hoursFrom(approvedMins)}h</p>
-          <p className="mt-1 text-xs text-muted-foreground">of {project.required_hours}h required</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            of {project.required_hours}h required
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Students</p>
@@ -129,8 +131,7 @@ function ProjectDetail() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(s.check_in_at).toLocaleString()} ·{" "}
-                  {formatMinutes(s.duration_minutes)}
+                  {new Date(s.check_in_at).toLocaleString()} · {formatMinutes(s.duration_minutes)}
                 </p>
                 {s.summary && <p className="mt-2 text-sm">{s.summary}</p>}
               </li>

@@ -125,11 +125,7 @@ export function SessionWidget() {
             maxLength={2000}
           />
         </div>
-        <Button
-          className="mt-4"
-          onClick={() => checkOut.mutate()}
-          disabled={checkOut.isPending}
-        >
+        <Button className="mt-4" onClick={() => checkOut.mutate()} disabled={checkOut.isPending}>
           <Square className="size-4" /> Check out &amp; submit
         </Button>
       </div>

@@ -16,41 +16,41 @@ RAVS digitizes the entire research attendance process—from assigning projects 
 
 2. Goals
 
- Eliminate paper-based attendance
+Eliminate paper-based attendance
 
- Digitally verify research work
+Digitally verify research work
 
- Maintain permanent work history
+Maintain permanent work history
 
- Simplify faculty approvals
+Simplify faculty approvals
 
- Generate attendance recommendations
+Generate attendance recommendations
 
- Generate semester reports
+Generate semester reports
 
- Manage projects and laboratories
+Manage projects and laboratories
 
- Support thousands of students
+Support thousands of students
 
 3. Tech Stack
 
 Frontend
 
- Next.js 15
+Next.js 15
 
- TypeScript
+TypeScript
 
- Tailwind CSS
+Tailwind CSS
 
- shadcn/ui
+shadcn/ui
 
- React Hook Form
+React Hook Form
 
- Zod
+Zod
 
- TanStack Query
+TanStack Query
 
- Zustand
+Zustand
 
 Backend
 
@@ -58,21 +58,21 @@ No custom backend.
 
 Use only:
 
- Supabase Auth
+Supabase Auth
 
- PostgreSQL
+PostgreSQL
 
- Storage
+Storage
 
- Realtime
+Realtime
 
- Row Level Security
+Row Level Security
 
- Edge Functions (optional)
+Edge Functions (optional)
 
 Deployment
 
- Netlify
+Netlify
 
 4. User Roles
 
@@ -80,49 +80,49 @@ Student
 
 Permissions
 
- Login
+Login
 
- View projects
+View projects
 
- View assigned faculty
+View assigned faculty
 
- Check In
+Check In
 
- Check Out
+Check Out
 
- Submit work
+Submit work
 
- Upload files
+Upload files
 
- View approval status
+View approval status
 
- View attendance
+View attendance
 
- View reports
+View reports
 
- Edit profile
+Edit profile
 
 Faculty
 
 Permissions
 
- Login
+Login
 
- View assigned students
+View assigned students
 
- View projects
+View projects
 
- Review submissions
+Review submissions
 
- Approve sessions
+Approve sessions
 
- Reject sessions
+Reject sessions
 
- Add remarks
+Add remarks
 
- Generate reports
+Generate reports
 
- Manage project members
+Manage project members
 
 Head Admin
 
@@ -130,21 +130,21 @@ Permissions
 
 Everything
 
- Manage departments
+Manage departments
 
- Manage laboratories
+Manage laboratories
 
- Manage users
+Manage users
 
- Manage projects
+Manage projects
 
- Assign faculty
+Assign faculty
 
- Assign students
+Assign students
 
- View analytics
+View analytics
 
- Export reports
+Export reports
 
 5. Features
 
@@ -152,281 +152,281 @@ Authentication
 
 Features
 
- Email Login
+Email Login
 
- College ID Login
+College ID Login
 
- Forgot Password
+Forgot Password
 
- Change Password
+Change Password
 
- Session Management
+Session Management
 
- Remember Me
+Remember Me
 
- Role Detection
+Role Detection
 
- Protected Routes
+Protected Routes
 
 Student Dashboard
 
 Widgets
 
- Active Projects
+Active Projects
 
- Today's Status
+Today's Status
 
- Current Session
+Current Session
 
- Pending Approvals
+Pending Approvals
 
- Total Approved Hours
+Total Approved Hours
 
- Weekly Hours
+Weekly Hours
 
- Attendance Percentage
+Attendance Percentage
 
- Recent Activity
+Recent Activity
 
 Faculty Dashboard
 
 Widgets
 
- Pending Reviews
+Pending Reviews
 
- Active Projects
+Active Projects
 
- Assigned Students
+Assigned Students
 
- Recent Activity
+Recent Activity
 
- Approval Statistics
+Approval Statistics
 
- Quick Actions
+Quick Actions
 
 Admin Dashboard
 
 Widgets
 
- Total Students
+Total Students
 
- Total Faculty
+Total Faculty
 
- Total Departments
+Total Departments
 
- Total Laboratories
+Total Laboratories
 
- Active Projects
+Active Projects
 
- Pending Approvals
+Pending Approvals
 
- Attendance Analytics
+Attendance Analytics
 
- Recent Logins
+Recent Logins
 
 Project Management
 
 Features
 
- Create Project
+Create Project
 
- Edit Project
+Edit Project
 
- Archive Project
+Archive Project
 
- Delete Project
+Delete Project
 
- Assign Faculty
+Assign Faculty
 
- Assign Students
+Assign Students
 
- Upload Documents
+Upload Documents
 
- Set Project Duration
+Set Project Duration
 
- Project Timeline
+Project Timeline
 
- Project Status
+Project Status
 
 Department Management
 
 Features
 
- Create Department
+Create Department
 
- Edit Department
+Edit Department
 
- Delete Department
+Delete Department
 
- Search
+Search
 
- Filter
+Filter
 
 Laboratory Management
 
 Features
 
- Create Lab
+Create Lab
 
- Edit Lab
+Edit Lab
 
- Delete Lab
+Delete Lab
 
- Assign Faculty
+Assign Faculty
 
- Assign Projects
+Assign Projects
 
 Student Workspace
 
 Features
 
- View Project Details
+View Project Details
 
- View Objectives
+View Objectives
 
- View Assigned Faculty
+View Assigned Faculty
 
- View Documents
+View Documents
 
- Upload Work
+Upload Work
 
- Work Timeline
+Work Timeline
 
- Session History
+Session History
 
 Check In System
 
 Features
 
- Start Session
+Start Session
 
- Live Timer
+Live Timer
 
- Prevent Multiple Sessions
+Prevent Multiple Sessions
 
- Auto Timestamp
+Auto Timestamp
 
- Session Notes
+Session Notes
 
 Check Out System
 
 Features
 
- End Session
+End Session
 
- Duration Calculation
+Duration Calculation
 
- Submit Summary
+Submit Summary
 
- Upload Files
+Upload Files
 
- Submit Session
+Submit Session
 
 Work Submission
 
 Features
 
- Rich Text Description
+Rich Text Description
 
- File Upload
+File Upload
 
- Image Upload
+Image Upload
 
- PDF Upload
+PDF Upload
 
- Multiple Attachments
+Multiple Attachments
 
- Validation
+Validation
 
- Save Draft
+Save Draft
 
 Faculty Approval
 
 Features
 
- Pending Queue
+Pending Queue
 
- Session Details
+Session Details
 
- Download Attachments
+Download Attachments
 
- Approve
+Approve
 
- Reject
+Reject
 
- Add Remarks
+Add Remarks
 
- Approval History
+Approval History
 
 Attendance Module
 
 Features
 
- Daily Attendance
+Daily Attendance
 
- Weekly Attendance
+Weekly Attendance
 
- Monthly Attendance
+Monthly Attendance
 
- Attendance Recommendation
+Attendance Recommendation
 
- Eligible Hours
+Eligible Hours
 
- Attendance Percentage
+Attendance Percentage
 
 Reports
 
 Generate
 
- Attendance Report
+Attendance Report
 
- Student Report
+Student Report
 
- Faculty Report
+Faculty Report
 
- Department Report
+Department Report
 
- Laboratory Report
+Laboratory Report
 
- Project Report
+Project Report
 
- Semester Report
+Semester Report
 
- Contribution Report
+Contribution Report
 
 Formats
 
- PDF
+PDF
 
- CSV
+CSV
 
 Analytics
 
 Charts
 
- Daily Activity
+Daily Activity
 
- Weekly Hours
+Weekly Hours
 
- Department Statistics
+Department Statistics
 
- Faculty Statistics
+Faculty Statistics
 
- Project Completion
+Project Completion
 
- Attendance Trends
+Attendance Trends
 
 Notifications
 
- Approval Received
+Approval Received
 
- Session Rejected
+Session Rejected
 
- New Project Assigned
+New Project Assigned
 
- Reminder to Check Out
+Reminder to Check Out
 
- Project Updates
+Project Updates
 
 Search
 
@@ -434,85 +434,85 @@ Global Search
 
 Search
 
- Students
+Students
 
- Faculty
+Faculty
 
- Projects
+Projects
 
- Departments
+Departments
 
- Laboratories
+Laboratories
 
 Filters
 
- Department
+Department
 
- Faculty
+Faculty
 
- Project
+Project
 
- Date
+Date
 
- Status
+Status
 
- Semester
+Semester
 
 Profile
 
 Features
 
- Edit Profile
+Edit Profile
 
- Change Password
+Change Password
 
- Profile Photo
+Profile Photo
 
- Contact Details
+Contact Details
 
 Settings
 
- Theme
+Theme
 
- Notifications
+Notifications
 
- Time Format
+Time Format
 
- Language
+Language
 
 Audit Logs
 
 Track
 
- Login
+Login
 
- Logout
+Logout
 
- Check In
+Check In
 
- Check Out
+Check Out
 
- Approval
+Approval
 
- Rejection
+Rejection
 
- Project Assignment
+Project Assignment
 
- User Creation
+User Creation
 
 File Management
 
 Supported Files
 
- PDF
+PDF
 
- DOCX
+DOCX
 
- PPT
+PPT
 
- Images
+Images
 
- ZIP
+ZIP
 
 Storage
 
@@ -520,87 +520,87 @@ Supabase Storage
 
 6. Database Tables
 
- users
+users
 
- profiles
+profiles
 
- departments
+departments
 
- laboratories
+laboratories
 
- faculty_assignments
+faculty_assignments
 
- projects
+projects
 
- project_members
+project_members
 
- work_sessions
+work_sessions
 
- work_submissions
+work_submissions
 
- approvals
+approvals
 
- attendance_records
+attendance_records
 
- reports
+reports
 
- notifications
+notifications
 
- audit_logs
+audit_logs
 
- files
+files
 
 7. Security
 
- Supabase Authentication
+Supabase Authentication
 
- Role-Based Access Control
+Role-Based Access Control
 
- Row Level Security (RLS)
+Row Level Security (RLS)
 
- Secure Storage Policies
+Secure Storage Policies
 
- Protected Routes
+Protected Routes
 
- Session Validation
+Session Validation
 
- Input Validation
+Input Validation
 
- File Type Validation
+File Type Validation
 
 8. Optional Future Features
 
- QR Code Check-In
+QR Code Check-In
 
- Geofencing
+Geofencing
 
- Face Verification
+Face Verification
 
- AI-generated Work Summaries
+AI-generated Work Summaries
 
- AI Attendance Insights
+AI Attendance Insights
 
- Email Notifications
+Email Notifications
 
- Push Notifications
+Push Notifications
 
- Google Calendar Integration
+Google Calendar Integration
 
- Microsoft Teams Integration
+Microsoft Teams Integration
 
- Dark Mode
+Dark Mode
 
- Mobile App (React Native)
+Mobile App (React Native)
 
- Offline Sync
+Offline Sync
 
- Research Milestones
+Research Milestones
 
- Supervisor Comments
+Supervisor Comments
 
- Version History
+Version History
 
- Real-time Collaboration
+Real-time Collaboration
 
 Folder Structure
 
@@ -622,17 +622,17 @@ storage/
 
 Deployment
 
- Frontend hosted on Netlify
+Frontend hosted on Netlify
 
- Authentication via Supabase Auth
+Authentication via Supabase Auth
 
- Database hosted on Supabase PostgreSQL
+Database hosted on Supabase PostgreSQL
 
- Files stored in Supabase Storage
+Files stored in Supabase Storage
 
- Authorization enforced using Row Level Security (RLS)
+Authorization enforced using Row Level Security (RLS)
 
- Optional business logic handled with Supabase Edge Functions
+Optional business logic handled with Supabase Edge Functions
 
 ## Development
 

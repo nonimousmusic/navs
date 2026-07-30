@@ -109,7 +109,6 @@
   --shadow-soft: 0 1px 2px oklch(0.22 0.014 45 / 6%), 0 12px 32px -18px oklch(0.22 0.014 45 / 30%);
 }
 
-
 .dark {
   --background: oklch(0.18 0.012 45);
   --foreground: oklch(0.96 0.01 80);

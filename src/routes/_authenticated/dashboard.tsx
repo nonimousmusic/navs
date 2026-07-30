@@ -81,7 +81,11 @@ function StudentView() {
       <SessionWidget />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Approved hours" value={`${hoursFrom(approvedMins)}h`} hint="Counts for attendance" />
+        <Stat
+          label="Approved hours"
+          value={`${hoursFrom(approvedMins)}h`}
+          hint="Counts for attendance"
+        />
         <Stat label="This week" value={`${hoursFrom(weekMins)}h`} hint="Approved only" />
         <Stat label="Pending review" value={String(pending.length)} hint="Awaiting faculty" />
         <Stat label="Verification rate" value={`${pct}%`} hint="Approved of submitted" />

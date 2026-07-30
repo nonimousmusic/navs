@@ -74,9 +74,7 @@ function Approvals() {
     return (
       <div>
         <h1 className="text-3xl">Approval queue</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Only faculty can review sessions.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Only faculty can review sessions.</p>
       </div>
     );
   }
@@ -106,18 +104,14 @@ function Approvals() {
               {s.student_college_id && (
                 <span className="text-xs text-muted-foreground">{s.student_college_id}</span>
               )}
-              <span className="ml-auto text-sm text-muted-foreground">
-                {s.projects?.title}
-              </span>
+              <span className="ml-auto text-sm text-muted-foreground">{s.projects?.title}</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {new Date(s.check_in_at).toLocaleString()} →{" "}
               {s.check_out_at ? new Date(s.check_out_at).toLocaleTimeString() : "—"} ·{" "}
               {formatMinutes(s.duration_minutes)}
             </p>
-            {s.notes && (
-              <p className="mt-3 text-sm text-muted-foreground">Plan: {s.notes}</p>
-            )}
+            {s.notes && <p className="mt-3 text-sm text-muted-foreground">Plan: {s.notes}</p>}
             <p className="mt-2 whitespace-pre-line text-sm">{s.summary}</p>
 
             <div className="mt-4 space-y-3">

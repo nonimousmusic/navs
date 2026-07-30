@@ -39,7 +39,10 @@ function Attendance() {
       let query = supabase.from("work_sessions").select("*").neq("status", "active");
       if (!isFaculty) query = query.eq("student_id", user!.id);
       else {
-        query = query.in("project_id", (projects ?? []).map((p) => p.id));
+        query = query.in(
+          "project_id",
+          (projects ?? []).map((p) => p.id),
+        );
       }
       const { data: sessions, error } = await query.order("check_in_at", { ascending: false });
       if (error) throw error;
