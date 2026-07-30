@@ -57,8 +57,19 @@ function AuthPage() {
       });
       setBusy(false);
       if (error) {
-        if (error.status === 429 || error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
-          return toast.error("Too many signup attempts. Please wait a few minutes or sign in with an existing account.");
+        if (
+          error.status === 429 ||
+          error.message.toLowerCase().includes("rate limit") ||
+          error.message.toLowerCase().includes("already registered") ||
+          error.message.toLowerCase().includes("too many")
+        ) {
+          // Attempt automatic sign-in fallback if account exists
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (!signInErr) {
+            toast.success("Signed in to your account.");
+            return navigate({ to: "/dashboard", replace: true });
+          }
+          return toast.error("Signup limit reached on Supabase. Please sign in with your password or use Google.");
         }
         return toast.error(error.message);
       }
