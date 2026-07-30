@@ -205,6 +205,17 @@ function ProjectsPage() {
                     Open
                   </Link>
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const url = `${window.location.origin}/projects/${p.id}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success("Event link copied to clipboard!");
+                  }}
+                >
+                  Share
+                </Button>
                 {!isFaculty && (
                   <Button
                     size="sm"

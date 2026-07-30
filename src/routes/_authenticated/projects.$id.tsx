@@ -1,14 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Share2, UserMinus, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { attachStudentNames } from "@/lib/people";
 import { formatMinutes, hoursFrom, statusTone } from "@/lib/session-utils";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/projects/$id")({
   head: () => ({
     meta: [
       { title: "Event — RAVS" },
-      { name: "description", content: "Event objectives, roster and logged research sessions." },
+      { name: "description", content: "Event details, roster, roles and logged research sessions." },
       { property: "og:title", content: "Event — RAVS" },
       { property: "og:description", content: "Roster and verified session history." },
     ],
@@ -18,6 +23,9 @@ export const Route = createFileRoute("/_authenticated/projects/$id")({
 
 function ProjectDetail() {
   const { id } = Route.useParams();
+  const { user, role } = useAuth();
+  const qc = useQueryClient();
+  const isAdminOrFaculty = role === "admin" || role === "faculty";
 
   const { data, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -46,21 +54,103 @@ function ProjectDetail() {
     },
   });
 
+  const toggleJoin = useMutation({
+    mutationFn: async (isJoined: boolean) => {
+      if (isJoined) {
+        const { error } = await supabase
+          .from("project_members")
+          .delete()
+          .eq("project_id", id)
+          .eq("student_id", user!.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("project_members")
+          .insert({ project_id: id, student_id: user!.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project", id] });
+      toast.success("Roster updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const updateRole = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "student" | "faculty" | "admin" }) => {
+      const { error } = await supabase.rpc("admin_update_user_role", {
+        target_user_id: userId,
+        new_role: newRole,
+      });
+      if (error) {
+        // Fallback upsert
+        const { error: upsertErr } = await supabase
+          .from("user_roles")
+          .upsert({ user_id: userId, role: newRole });
+        if (upsertErr) throw upsertErr;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Member role updated");
+      qc.invalidateQueries({ queryKey: ["project", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeMember = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("project_members")
+        .delete()
+        .eq("project_id", id)
+        .eq("student_id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Member removed from event");
+      qc.invalidateQueries({ queryKey: ["project", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading project…</p>;
   if (!data?.project) return <p className="text-sm text-muted-foreground">Event not found.</p>;
 
   const { project, members, sessions } = data;
+  const isJoined = members.some((m) => m.student_id === user?.id);
   const approvedMins = sessions
     .filter((s) => s.status === "approved")
     .reduce((a, s) => a + (s.duration_minutes ?? 0), 0);
 
+  const shareEvent = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    toast.success("Event link copied to clipboard!");
+  };
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl">{project.title}</h1>
-        {project.description && (
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
-        )}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl">{project.title}</h1>
+          {project.description && (
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={shareEvent}>
+            <Share2 className="mr-1.5 size-4" /> Share event
+          </Button>
+          <Button
+            size="sm"
+            variant={isJoined ? "ghost" : "default"}
+            onClick={() => toggleJoin.mutate(isJoined)}
+            disabled={toggleJoin.isPending}
+          >
+            {isJoined ? "Leave event" : "Join event"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -69,7 +159,7 @@ function ProjectDetail() {
           <p className="mt-2 font-display text-3xl">{hoursFrom(approvedMins)}h</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Students</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">People enrolled</p>
           <p className="mt-2 font-display text-3xl">{members.length}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-5">
@@ -78,24 +168,78 @@ function ProjectDetail() {
         </div>
       </div>
 
-      <section>
-        <h2 className="text-xl">Roster</h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl">Enrolled People &amp; Roles</h2>
+          {isAdminOrFaculty && (
+            <span className="flex items-center text-xs text-muted-foreground">
+              <ShieldAlert className="mr-1 size-3.5" /> Admin controls active
+            </span>
+          )}
+        </div>
+
         {members.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No students enrolled yet.</p>
+          <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No people enrolled yet. Share the event link above to invite participants!
+          </p>
         ) : (
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {members.map((m) => (
-              <li
-                key={m.student_id}
-                className="rounded-full border border-border bg-card px-3 py-1 text-sm"
-              >
-                {m.student_name}
-                {m.student_college_id ? (
-                  <span className="text-muted-foreground"> · {m.student_college_id}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="divide-y divide-border">
+              {members.map((m) => (
+                <div key={m.student_id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                  <div>
+                    <p className="font-medium text-sm">
+                      {m.student_name} {m.student_id === user?.id && "(You)"}
+                    </p>
+                    {m.student_college_id && (
+                      <p className="text-xs text-muted-foreground">{m.student_college_id}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {isAdminOrFaculty ? (
+                      <Select
+                        value={m.student_role}
+                        onValueChange={(newRole) =>
+                          updateRole.mutate({
+                            userId: m.student_id,
+                            newRole: newRole as "student" | "faculty" | "admin",
+                          })
+                        }
+                        disabled={updateRole.isPending}
+                      >
+                        <SelectTrigger className="h-8 w-32 text-xs capitalize">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="faculty">Faculty</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="rounded-full border border-border px-2.5 py-0.5 text-xs capitalize text-muted-foreground">
+                        {m.student_role}
+                      </span>
+                    )}
+
+                    {isAdminOrFaculty && m.student_id !== user?.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:bg-destructive/10"
+                        title="Remove member"
+                        onClick={() => removeMember.mutate(m.student_id)}
+                        disabled={removeMember.isPending}
+                      >
+                        <UserMinus className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </section>
 
