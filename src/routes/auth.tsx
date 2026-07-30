@@ -56,7 +56,12 @@ function AuthPage() {
         },
       });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) {
+        if (error.status === 429 || error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("too many")) {
+          return toast.error("Too many signup attempts. Please wait a few minutes or sign in with an existing account.");
+        }
+        return toast.error(error.message);
+      }
       if (!data.session) {
         toast.info("Account created! Please check your email to confirm your account or sign in.");
         return;
