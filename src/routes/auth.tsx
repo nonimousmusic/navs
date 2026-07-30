@@ -49,18 +49,27 @@ function AuthPage() {
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, college_id: collegeId, department, role },
-      },
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Account created — you're signed in.");
-    navigate({ to: "/dashboard", replace: true });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: fullName, college_id: collegeId, department, role },
+        },
+      });
+      setBusy(false);
+      if (error) return toast.error(error.message);
+      if (!data.session) {
+        toast.info("Account created! Please check your email to confirm your account or sign in.");
+        return;
+      }
+      toast.success("Account created — you're signed in.");
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      setBusy(false);
+      toast.error(err instanceof Error ? err.message : "Sign up failed");
+    }
   }
 
   async function google() {

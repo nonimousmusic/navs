@@ -42,16 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   async function load(userId: string) {
-    const [{ data: roleRow }, { data: profileRow }] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("id, full_name, college_id, department, phone, avatar_url")
-        .eq("id", userId)
-        .maybeSingle(),
-    ]);
-    setRole((roleRow?.role as AppRole) ?? null);
-    setProfile((profileRow as Profile) ?? null);
+    try {
+      const [{ data: roleRow }, { data: profileRow }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("id, full_name, college_id, department, phone, avatar_url")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
+      setRole((roleRow?.role as AppRole) ?? null);
+      setProfile((profileRow as Profile) ?? null);
+    } catch (err) {
+      console.error("Failed to load user profile or role:", err);
+    }
   }
 
   useEffect(() => {
