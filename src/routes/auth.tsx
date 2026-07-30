@@ -28,8 +28,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [collegeId, setCollegeId] = useState("");
-  const [department, setDepartment] = useState("");
+  const [college, setCollege] = useState("");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard", replace: true });
@@ -53,7 +52,7 @@ function AuthPage() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { full_name: fullName, college_id: collegeId, department },
+          data: { full_name: fullName, college },
         },
       });
       setBusy(false);
@@ -126,23 +125,15 @@ function AuthPage() {
                     onChange={(e) => setFullName(e.target.value)}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="collegeId">College ID</Label>
-                    <Input
-                      id="collegeId"
-                      value={collegeId}
-                      onChange={(e) => setCollegeId(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dept">Department</Label>
-                    <Input
-                      id="dept"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="college">College</Label>
+                  <Input
+                    id="college"
+                    required
+                    placeholder="College name"
+                    value={college}
+                    onChange={(e) => setCollege(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email2">Email</Label>

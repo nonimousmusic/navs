@@ -23,14 +23,13 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const { user, role, profile } = useAuth();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ full_name: "", college_id: "", department: "" });
+  const [form, setForm] = useState({ full_name: "", college_id: "" });
 
   useEffect(() => {
     if (profile) {
       setForm({
         full_name: profile.full_name ?? "",
         college_id: profile.college_id ?? "",
-        department: profile.department ?? "",
       });
     }
   }, [profile]);
@@ -43,7 +42,6 @@ function ProfilePage() {
         .update({
           full_name: form.full_name.trim(),
           college_id: form.college_id.trim() || null,
-          department: form.department.trim() || null,
         })
         .eq("id", user!.id);
       if (error) throw error;
@@ -75,20 +73,12 @@ function ProfilePage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="college_id">College / roll ID</Label>
+          <Label htmlFor="college_id">College</Label>
           <Input
             id="college_id"
+            placeholder="College name"
             value={form.college_id}
             onChange={(e) => setForm({ ...form, college_id: e.target.value })}
-            maxLength={50}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={form.department}
-            onChange={(e) => setForm({ ...form, department: e.target.value })}
             maxLength={100}
           />
         </div>
