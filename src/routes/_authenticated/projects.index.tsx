@@ -35,8 +35,8 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const isFaculty = role === "faculty" || role === "admin";
   const [open, setOpen] = useState(false);
-  const [creatorRole, setCreatorRole] = useState<"student" | "faculty">(
-    isFaculty ? "faculty" : "student",
+  const [creatorRole, setCreatorRole] = useState<"faculty" | "admin">(
+    role === "admin" ? "admin" : "faculty",
   );
   const [form, setForm] = useState({
     title: "",
@@ -58,9 +58,17 @@ function ProjectsPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Give the event a title");
-      if (creatorRole === "faculty" && !isFaculty) {
-        const { error: grantError } = await supabase.rpc("self_grant_faculty");
-        if (grantError) throw grantError;
+      if (role !== creatorRole) {
+        const { error: grantError } = await supabase.rpc("self_grant_role", {
+          target_role: creatorRole,
+        });
+        if (grantError) {
+          if (creatorRole === "faculty") {
+            await supabase.rpc("self_grant_faculty");
+          } else {
+            throw grantError;
+          }
+        }
         await refreshProfile();
       }
       const { error } = await supabase.from("projects").insert({
@@ -129,28 +137,22 @@ function ProjectsPage() {
                 <Label>Your role for this event</Label>
                 <RadioGroup
                   value={creatorRole}
-                  onValueChange={(v) => setCreatorRole(v as "student" | "faculty")}
+                  onValueChange={(v) => setCreatorRole(v as "faculty" | "admin")}
                   className="flex gap-6 pt-1"
                 >
                   <div className="flex items-center gap-2">
-                    <RadioGroupItem value="student" id="creator-student" />
-                    <Label htmlFor="creator-student" className="font-normal">
-                      Student
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <RadioGroupItem value="faculty" id="creator-faculty" />
-                    <Label htmlFor="creator-faculty" className="font-normal">
+                    <Label htmlFor="creator-faculty" className="font-normal cursor-pointer">
                       Faculty
                     </Label>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="admin" id="creator-admin" />
+                    <Label htmlFor="creator-admin" className="font-normal cursor-pointer">
+                      Admin
+                    </Label>
+                  </div>
                 </RadioGroup>
-                {creatorRole === "student" && !isFaculty && (
-                  <p className="text-xs text-muted-foreground">
-                    Creating and supervising an event requires the Faculty role. Select Faculty
-                    above to continue — this upgrades your account.
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
@@ -171,11 +173,7 @@ function ProjectsPage() {
                   maxLength={1000}
                 />
               </div>
-              <Button
-                className="w-full"
-                onClick={() => create.mutate()}
-                disabled={create.isPending || (creatorRole === "student" && !isFaculty)}
-              >
+              <Button className="w-full" onClick={() => create.mutate()} disabled={create.isPending}>
                 Create event
               </Button>
             </div>
