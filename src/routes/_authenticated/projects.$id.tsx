@@ -57,10 +57,7 @@ function ProjectDetail() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {project.lab_name || "Research event"}
-        </p>
-        <h1 className="mt-1 text-3xl">{project.title}</h1>
+        <h1 className="text-3xl">{project.title}</h1>
         {project.description && (
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
         )}
@@ -70,9 +67,6 @@ function ProjectDetail() {
         <div className="rounded-lg border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved hours</p>
           <p className="mt-2 font-display text-3xl">{hoursFrom(approvedMins)}h</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            of {project.required_hours}h required
-          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-5">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Students</p>
@@ -83,15 +77,6 @@ function ProjectDetail() {
           <p className="mt-2 font-display text-3xl">{sessions.length}</p>
         </div>
       </div>
-
-      {project.objectives && (
-        <section>
-          <h2 className="text-xl">Objectives</h2>
-          <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
-            {project.objectives}
-          </p>
-        </section>
-      )}
 
       <section>
         <h2 className="text-xl">Roster</h2>

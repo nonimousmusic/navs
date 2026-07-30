@@ -41,9 +41,6 @@ function ProjectsPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    objectives: "",
-    lab_name: "",
-    required_hours: "60",
   });
 
   const { data: projects, isLoading } = useQuery({
@@ -69,16 +66,13 @@ function ProjectsPage() {
       const { error } = await supabase.from("projects").insert({
         title: form.title.trim(),
         description: form.description || null,
-        objectives: form.objectives || null,
-        lab_name: form.lab_name || null,
-        required_hours: Number(form.required_hours) || 60,
         faculty_id: user!.id,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setOpen(false);
-      setForm({ title: "", description: "", objectives: "", lab_name: "", required_hours: "60" });
+      setForm({ title: "", description: "" });
       toast.success("Event created");
       qc.invalidateQueries({ queryKey: ["projects"] });
     },
@@ -177,37 +171,6 @@ function ProjectsPage() {
                   maxLength={1000}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="obj">Objectives</Label>
-                <Textarea
-                  id="obj"
-                  rows={3}
-                  value={form.objectives}
-                  onChange={(e) => setForm({ ...form, objectives: e.target.value })}
-                  maxLength={1000}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="lab">Laboratory</Label>
-                  <Input
-                    id="lab"
-                    value={form.lab_name}
-                    onChange={(e) => setForm({ ...form, lab_name: e.target.value })}
-                    maxLength={100}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hours">Required hours</Label>
-                  <Input
-                    id="hours"
-                    type="number"
-                    min={1}
-                    value={form.required_hours}
-                    onChange={(e) => setForm({ ...form, required_hours: e.target.value })}
-                  />
-                </div>
-              </div>
               <Button
                 className="w-full"
                 onClick={() => create.mutate()}
@@ -240,17 +203,12 @@ function ProjectsPage() {
                   {p.status}
                 </span>
               </div>
-              {p.lab_name && (
-                <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
-                  {p.lab_name}
-                </p>
-              )}
               {p.description && (
                 <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{p.description}</p>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 {(p.project_members ?? []).length} student
-                {(p.project_members ?? []).length === 1 ? "" : "s"} · {p.required_hours}h required
+                {(p.project_members ?? []).length === 1 ? "" : "s"}
               </p>
               <div className="mt-4 flex gap-2">
                 <Button asChild variant="outline" size="sm">
