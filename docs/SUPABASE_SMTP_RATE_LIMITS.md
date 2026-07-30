@@ -35,15 +35,15 @@ By default, hosted Supabase projects use a shared, built-in SMTP service meant s
 1. Toggle **Enable Custom SMTP** to **ON**.
 2. Enter the following SMTP credentials:
 
-| Field            | Value                                  | Notes                                                            |
-| :--------------- | :------------------------------------- | :--------------------------------------------------------------- |
-| **Sender Email** | `onboarding@resend.dev`                | Default test sender _(Replace with custom domain once verified)_ |
-| **Sender Name**  | `Research Connect`                     | Name displayed in recipient's inbox                              |
-| **Host**         | `smtp.resend.com`                      | Resend SMTP server address                                       |
-| **Port**         | `465`                                  | SSL Port                                                         |
-| **Encryption**   | `SSL / TLS`                            | Implicit TLS encryption                                          |
-| **Username**     | `resend`                               | Default username for Resend SMTP                                 |
-| **Password**     | `your_resend_api_key` | Resend API Key                                                   |
+| Field            | Value                   | Notes                                                            |
+| :--------------- | :---------------------- | :--------------------------------------------------------------- |
+| **Sender Email** | `onboarding@resend.dev` | Default test sender _(Replace with custom domain once verified)_ |
+| **Sender Name**  | `Research Connect`      | Name displayed in recipient's inbox                              |
+| **Host**         | `smtp.resend.com`       | Resend SMTP server address                                       |
+| **Port**         | `465`                   | SSL Port                                                         |
+| **Encryption**   | `SSL / TLS`             | Implicit TLS encryption                                          |
+| **Username**     | `resend`                | Default username for Resend SMTP                                 |
+| **Password**     | `your_resend_api_key`   | Resend API Key                                                   |
 
 3. Click **Save** at the bottom of the form.
 

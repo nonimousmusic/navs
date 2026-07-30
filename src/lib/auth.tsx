@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function load(userId: string) {
     try {
-      const [{ data: roleRow }, { data: profileRow }] = await Promise.all([
+      let [{ data: roleRow }, { data: profileRow }] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
         supabase
           .from("profiles")
@@ -51,7 +51,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq("id", userId)
           .maybeSingle(),
       ]);
-      setRole((roleRow?.role as AppRole) ?? null);
+
+      if (!profileRow) {
+        const { data: userResp } = await supabase.auth.getUser();
+        const userMeta = userResp.user?.user_metadata;
+        const newProfile = {
+          id: userId,
+          full_name: userMeta?.full_name || "",
+          college_id: userMeta?.college_id || userMeta?.college || null,
+        };
+        try {
+          await supabase.from("profiles").upsert(newProfile);
+        } catch {
+          // ignore upsert fallback error
+        }
+        profileRow = newProfile as Profile;
+      }
+
+      if (!roleRow) {
+        try {
+          await supabase.from("user_roles").upsert({ user_id: userId, role: "student" });
+        } catch {
+          // ignore upsert fallback error
+        }
+        roleRow = { role: "student" };
+      }
+
+      setRole((roleRow?.role as AppRole) ?? "student");
       setProfile((profileRow as Profile) ?? null);
     } catch (err) {
       console.error("Failed to load user profile or role:", err);

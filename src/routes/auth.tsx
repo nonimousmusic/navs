@@ -47,38 +47,69 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      const cleanEmail = email.trim();
+      const cleanName = fullName.trim();
+      const cleanCollege = college.trim();
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { full_name: fullName, college },
+          data: {
+            full_name: cleanName,
+            college_id: cleanCollege,
+            college: cleanCollege,
+          },
         },
       });
-      setBusy(false);
+
       if (error) {
-        if (
+        setBusy(false);
+        const errMsg = error.message.toLowerCase();
+        const isUserExists =
+          error.status === 400 ||
+          error.status === 422 ||
           error.status === 429 ||
-          error.message.toLowerCase().includes("rate limit") ||
-          error.message.toLowerCase().includes("already registered") ||
-          error.message.toLowerCase().includes("too many")
-        ) {
-          // Attempt automatic sign-in fallback if account exists
-          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          errMsg.includes("already registered") ||
+          errMsg.includes("already exists") ||
+          errMsg.includes("rate limit") ||
+          errMsg.includes("too many");
+
+        if (isUserExists) {
+          const { error: signInErr } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          });
           if (!signInErr) {
-            toast.success("Signed in to your account.");
+            toast.success("Account already exists — signed in!");
             return navigate({ to: "/dashboard", replace: true });
           }
-          return toast.error(
-            "Signup limit reached on Supabase. Please sign in with your password or use Google.",
-          );
+          if (signInErr.message.toLowerCase().includes("invalid login credentials")) {
+            return toast.error(
+              "An account with this email already exists. Please sign in with your password.",
+            );
+          }
+          return toast.error(signInErr.message || error.message);
         }
         return toast.error(error.message);
       }
-      if (!data.session) {
-        toast.info("Account created! Please check your email to confirm your account or sign in.");
+
+      if (!data.session && data.user) {
+        const { error: signInErr } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+        setBusy(false);
+        if (!signInErr) {
+          toast.success("Account created — signed in!");
+          return navigate({ to: "/dashboard", replace: true });
+        }
+        toast.info("Account created! Please check your email to confirm or sign in.");
         return;
       }
+
+      setBusy(false);
       toast.success("Account created — you're signed in.");
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
