@@ -648,44 +648,6 @@ function callLayer(fn, event, handler, inner) {
 function isUnhandledResponse(val) {
 	return val === void 0 || val === kNotFound;
 }
-function defineHandler(input) {
-	if (typeof input === "function") return handlerWithFetch(input);
-	const handler = input.handler || (input.fetch ? function _fetchHandler(event) {
-		return input.fetch(event.req);
-	} : NoHandler);
-	return Object.assign(handlerWithFetch(input.middleware?.length ? composeHandler(input.middleware, handler) : handler), input);
-}
-function handlerWithFetch(handler) {
-	if ("fetch" in handler) return handler;
-	return Object.assign(handler, { fetch: (req) => {
-		if (typeof req === "string") req = new URL(req, "http://_");
-		if (req instanceof URL) req = new Request(req);
-		const event = new H3Event(req);
-		try {
-			return Promise.resolve(toResponse(handler(event), event));
-		} catch (error) {
-			return Promise.resolve(toResponse(toError(error), event));
-		}
-	} });
-}
-function defineLazyEventHandler(loader) {
-	let handler;
-	let promise;
-	return defineHandler(function lazyHandler(event) {
-		return handler ? handler(event) : (promise ??= Promise.resolve(loader()).then(function resolveLazyHandler(r) {
-			handler = toEventHandler(r) || toEventHandler(r.default);
-			if (typeof handler !== "function") throw new TypeError("Invalid lazy handler", { cause: { resolved: r } });
-			return handler;
-		})).then((r) => r(event));
-	});
-}
-function toEventHandler(handler) {
-	if (typeof handler === "function") return handler;
-	if (typeof handler?.handler === "function" && handler.constructor?.["~h3"]) return handler.handler;
-	if (typeof handler?.fetch === "function") return function _fetchHandler(event) {
-		return handler.fetch(event.req);
-	};
-}
 const NoHandler = () => kNotFound;
 var H3Core = class {
 	static "~h3" = true;
@@ -753,4 +715,4 @@ function routeHandler(route) {
 String.raw`(?:^|/)(?:\.|%(?:25)*2e){1,2}(?:/|$)`;
 String.raw`%(?:25)*(?:2f|5c)`;
 //#endregion
-export { defineLazyEventHandler as i, HTTPError as n, HTTPResponse as r, H3Core as t };
+export { HTTPError as n, H3Core as t };

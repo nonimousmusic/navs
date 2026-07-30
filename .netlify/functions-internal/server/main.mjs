@@ -1,22 +1,6 @@
 globalThis.__nitro_main__ = import.meta.url;
-import { i as defineLazyEventHandler, n as HTTPError, t as H3Core } from "./_libs/h3+rou3+srvx.mjs";
+import { n as HTTPError, t as H3Core } from "./_libs/h3+rou3+srvx.mjs";
 import { t as NodeResponse } from "./_libs/srvx.mjs";
-//#region #nitro/virtual/routing
-const _lazy_eO9_rI = defineLazyEventHandler(() => import("./_chunks/renderer-template.mjs"));
-const findRoute = /* @__PURE__ */ (() => {
-	const data = {
-		route: "/**",
-		handler: _lazy_eO9_rI
-	};
-	return ((_m, p) => {
-		return {
-			data,
-			params: { "_": p.slice(1) }
-		};
-	});
-})();
-[].filter(Boolean);
-//#endregion
 //#region node_modules/nitro/dist/runtime/internal/error/prod.mjs
 const errorHandler = (error, event) => {
 	const res = defaultHandler(error, event);
@@ -91,9 +75,7 @@ function createNitroApp() {
 	};
 }
 function createH3App(config) {
-	const h3App = new H3Core(config);
-	h3App["~findRoute"] = (event) => findRoute(event.req.method, event.url.pathname);
-	return h3App;
+	return new H3Core(config);
 }
 //#endregion
 //#region node_modules/nitro/dist/runtime/internal/app.mjs
