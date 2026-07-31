@@ -1,4 +1,4 @@
-project_id = "your_supabase_project_id"
+project_id = "ougflpcnglwgxdgqfccj"
 
 [auth.rate_limit]
 email_sent = 300
