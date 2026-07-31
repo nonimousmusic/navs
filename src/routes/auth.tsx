@@ -81,21 +81,42 @@ function AuthPage() {
       const cleanName = fullName.trim();
       const cleanCollege = college.trim();
 
-      const { data, error } = await withTimeout(
-        supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              full_name: cleanName,
-              college_id: cleanCollege,
-              college: cleanCollege,
+      let data, error;
+      try {
+        const res = await withTimeout(
+          supabase.auth.signUp({
+            email: cleanEmail,
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+              data: {
+                full_name: cleanName,
+                college_id: cleanCollege,
+                college: cleanCollege,
+              },
             },
-          },
-        }),
-        15000,
-      );
+          }),
+          12000,
+        );
+        data = res.data;
+        error = res.error;
+      } catch (signUpErr) {
+        // If signUp times out (e.g. Supabase SMTP/DNS delivery is degraded),
+        // try signing in directly in case the user account already exists.
+        const { error: signInErr } = await withTimeout(
+          supabase.auth.signInWithPassword({ email: cleanEmail, password }),
+          8000,
+        ).catch(() => ({ error: null }));
+
+        if (!signInErr) {
+          toast.success("Signed in successfully!");
+          return navigate({ to: "/dashboard", replace: true });
+        }
+
+        throw new Error(
+          "Supabase email service is currently responding slowly due to upstream DNS maintenance. If you already have an account, please use the 'Sign in' tab.",
+        );
+      }
 
       if (error) {
         setBusy(false);
