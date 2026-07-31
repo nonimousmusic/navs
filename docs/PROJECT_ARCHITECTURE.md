@@ -1,138 +1,133 @@
-# Complete System Architecture & Developer Guide: Research Connect (RAVS)
+# Architecture — RAVS
 
-This document provides a complete technical walkthrough of the **Research Attendance & Verification System (RAVS)**, detailing the frontend routing, state management, database schema, authentication flow, and deployment workflow.
+How the frontend is put together and how data flows through it. For the database schema, RLS policies, and Supabase-specific setup, see [SUPABASE_GUIDE.md](SUPABASE_GUIDE.md).
 
 ---
 
-## 1. Core Architecture & Stack
+## 1. High-level shape
 
 ```mermaid
 graph TD
-    User([User / Browser]) -->|React 19 + TanStack Router| Client[Vite Single Page Application]
-    Client -->|Supabase JS Client| Auth[Supabase Auth Engine]
-    Client -->|PostgreSQL Queries via RLS| DB[(Supabase PostgreSQL Database)]
-    Client -->|File Storage| Storage[Supabase Storage Buckets]
+    Browser([Browser]) -->|React 19 + TanStack Router| SPA[Vite Single-Page App]
+    SPA -->|supabase-js, anon key| Auth[Supabase Auth]
+    SPA -->|PostgREST, RLS-enforced| DB[(Supabase Postgres)]
+    SPA -->|signed URLs| Storage[Supabase Storage: submissions bucket]
 ```
 
-- **Frontend:** Built with **React 19**, **Vite**, **TanStack Router**, **TanStack Query**, and **Tailwind CSS v4**.
-- **Backend Platform:** Serverless architecture backed entirely by **Supabase** (PostgreSQL, Supabase Auth, Storage).
-- **Security Layer:** Enforced at the database level via PostgreSQL **Row-Level Security (RLS)** policies.
+There is no application server. The SPA talks to Supabase directly with the public anon key; every access rule is enforced by Postgres Row-Level Security, not by any backend code. This is a deliberate, load-bearing architectural choice — see §5 before adding a server component.
 
 ---
 
-## 2. Directory Structure & Key Files
+## 2. Routing & the auth guard
 
-```text
-src/
-├── components/          # UI components (Radix primitives, Modals, Forms, Tables)
-├── hooks/               # Custom React hooks (useAuth, useSessionTimer, useProjects)
-├── lib/                 # Utility functions & Supabase JS client initializer
-│   ├── supabase.ts      # Supabase client singleton instance
-│   └── utils.ts         # Tailwind class merger (cn) & date formatters
-├── routes/              # TanStack File-Based Route Hierarchy
-│   ├── __root.tsx       # Root layout provider & global toast containers
-│   ├── auth.tsx         # Sign in, sign up, and password reset form
-│   └── _authenticated/  # Authenticated route guard layout
-│       ├── dashboard.tsx        # Dynamic dashboard based on active role
-│       ├── projects.index.tsx   # Project listing & filter views
-│       ├── projects.$id.tsx     # Project detail, timer widget & submission form
-│       ├── approvals.tsx        # Faculty approval queue with review dialogs
-│       ├── attendance.tsx       # Attendance summary, charts & report generation
-│       └── profile.tsx          # Account settings & password manager
-```
+File-based routes under `src/routes/`, powered by `@tanstack/react-router`:
 
----
-
-## 3. Authentication & User Role Model
-
-User authentication is managed via Supabase Auth. Profiles and permissions are linked to `auth.users(id)`:
-
-```sql
-CREATE TYPE public.app_role AS ENUM ('student', 'faculty', 'admin');
-
-CREATE TABLE public.profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name TEXT NOT NULL DEFAULT '',
-    college_id TEXT,
-    department TEXT,
-    phone TEXT,
-    avatar_url TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE public.user_roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    role public.app_role NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (user_id, role)
-);
-
-CREATE TABLE public.work_submissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-    student_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    file_path TEXT,
-    file_name TEXT,
-    file_size INTEGER,
-    status public.session_status NOT NULL DEFAULT 'pending',
-    remarks TEXT,
-    reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    reviewed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
-
-### Role Workflows
-
-1. **Student:**
-   - Starts active research timer on [projects.$id.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/projects.$id.tsx).
-   - Submits work notes and attached file proofs (PDFs, images, ZIPs) per event.
-   - Views approved hours and attendance breakdown on [attendance.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/attendance.tsx).
-
-2. **Faculty:**
-   - Inspects pending session and submission queue on [approvals.tsx](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/src/routes/_authenticated/approvals.tsx).
-   - Reviews student work notes, downloads submitted documents, and approves/rejects with remarks.
-   - Creates research events and manages event settings.
-
-3. **Head Admin:**
-   - Full visibility across events, rosters, and user permissions.
-   - Updates user roles via secure `admin_update_user_role` and `self_grant_faculty` RPC functions (with automated duplicate role cleanup).
-
----
-
-## 4. Work Session & Verification Workflow
+- `__root.tsx` — wraps everything in `QueryClientProvider` and `AuthProvider`. Renders `<Outlet />` directly; it does **not** render `<html>`/`<body>` (see §5 for why that matters).
+- `index.tsx` — public landing page.
+- `auth.tsx` — sign in / create account. Redirects to `/dashboard` if a session already exists.
+- `_authenticated/route.tsx` — the guard. Its `beforeLoad` calls `supabase.auth.getUser()` and throws a redirect to `/auth` if there's no user; otherwise renders `AppShell` (header, nav, sign-out) around `<Outlet />`. Every route nested under `_authenticated/` inherits this guard automatically.
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Student
-    participant UI as Frontend App
-    participant DB as Supabase DB
-    actor Faculty
+    actor U as User
+    participant R as Router
+    participant G as _authenticated/route.tsx
+    participant S as Supabase Auth
 
-    Student->>UI: Click "Check In" (Start Session)
-    UI->>DB: INSERT into work_sessions (status: 'active', start_time: NOW())
-    Note over Student, UI: Timer runs in browser
-    Student->>UI: Click "Check Out" & Submit Work Proof
-    UI->>DB: UPDATE work_sessions (status: 'completed', end_time: NOW(), summary, files)
-    UI->>DB: INSERT into approvals (status: 'pending')
-    Faculty->>UI: View Approvals Queue
-    Faculty->>DB: UPDATE approvals (status: 'approved', remarks, verified_hours)
-    DB->>DB: Trigger updates attendance_records
+    U->>R: navigate to /dashboard
+    R->>G: beforeLoad()
+    G->>S: getUser()
+    alt no session
+        S-->>G: null
+        G-->>R: redirect to /auth
+    else session exists
+        S-->>G: user
+        G-->>R: render AppShell + Dashboard
+    end
 ```
 
 ---
 
-## 5. Documentation Summary
+## 3. Role & auth flow
 
-The repository contains documentation covering all aspects of the application:
+`lib/auth.tsx`'s `AuthProvider` loads the session once on mount and subscribes to `onAuthStateChange`. On each auth event it fetches the user's single `user_roles` row and their `profiles` row, self-healing either if missing (see [SUPABASE_GUIDE.md §3](SUPABASE_GUIDE.md#3-role-model) for the exact functions involved). `role` and `profile` are exposed via `useAuth()` and read throughout the app — there is no separate role fetch per page.
 
-| Document                                                                                                                                     | Description                                                            |
-| :------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
-| 📘 **[README.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/README.md)**                                                 | Main project overview, features, quick start & role permissions.       |
-| 🛡️ **[docs/SUPABASE_GUIDE.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/docs/SUPABASE_GUIDE.md)**                       | Full database schema, RLS policies, migrations & CLI tools.            |
-| 🏗️ **[docs/PROJECT_ARCHITECTURE.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/docs/PROJECT_ARCHITECTURE.md)**           | Complete developer architecture, sequence diagrams & folder structure. |
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI as Frontend
+    participant DB as Supabase
+
+    Student->>UI: Sign up
+    UI->>DB: auth.signUp() (no role in metadata)
+    DB->>DB: trigger: handle_new_user() inserts profiles + user_roles('student')
+    Student->>UI: Create event
+    UI->>DB: rpc('self_grant_faculty')
+    DB->>DB: replaces caller's role with 'faculty'
+    UI->>DB: insert into projects (now passes RLS: has_role('faculty'))
+    Note over Student,DB: Student is now Faculty account-wide, not just for this event
+```
+
+Promoting someone to `admin` (or changing anyone's role) is a separate, admin-only path: the members sidebar on an event page calls `rpc('admin_update_user_role', { target_user_id, new_role })`, which checks `has_role(auth.uid(), 'admin')` before doing anything.
+
+---
+
+## 4. Core feature flows
+
+### Check-in / check-out (work sessions)
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI
+    participant DB
+    actor Faculty
+
+    Student->>UI: Check in
+    UI->>DB: insert work_sessions (status: 'active')
+    Note over UI: SessionWidget shows a live timer
+    Student->>UI: Check out + write summary
+    UI->>DB: update work_sessions (status: 'pending', duration_minutes, summary)
+    Faculty->>UI: Open Approvals queue
+    UI->>DB: select work_sessions where status='pending' and project.faculty_id = me
+    Faculty->>UI: Approve / Reject + remarks
+    UI->>DB: update work_sessions (status, remarks, reviewed_by, reviewed_at)
+```
+
+A partial unique index (`one_active_session_per_student`) guarantees a student can't have two active sessions at once — enforced in the database, not just the UI.
+
+### File submissions
+
+```mermaid
+sequenceDiagram
+    actor Member
+    participant UI
+    participant Storage as Supabase Storage
+    participant DB
+    actor Faculty
+
+    Member->>UI: Choose file + write comment
+    UI->>Storage: upload to submissions/{userId}/{projectId}/{file}
+    UI->>DB: insert submissions (status: 'pending', file_path, comment)
+    Faculty->>UI: Open event page
+    UI->>Storage: createSignedUrl(file_path) on click, to view the file
+    Faculty->>UI: Approve / Reject + comment
+    UI->>DB: update submissions (status, faculty_comment, reviewed_by, reviewed_at)
+```
+
+Both flows follow the same shape on purpose: member creates a `pending` row, the event's owning faculty (or an admin) transitions it to `approved`/`rejected` with their own remark. `lib/people.ts`'s `attachStudentNames()` is the shared helper that joins `student_name` / `student_role` onto whichever rows need it (sessions, submissions, or roster members).
+
+---
+
+## 5. Why this is a static SPA, not SSR — and a war story
+
+`package.json` includes `@tanstack/react-start`, and `src/server.ts` / `src/start.ts` exist, left over from an earlier SSR-oriented setup. **None of it is active.** `vite.config.ts` only registers the plain `@tanstack/router-plugin` (no `tanstackStart()` plugin), and `netlify.toml` builds with `vite build` and deploys `dist/` as a static SPA with a catch-all redirect to `index.html`. `main.tsx` mounts the app the ordinary client-only way: `createRoot(document.getElementById("root")).render(...)`.
+
+This matters because the two models are incompatible in one specific way: TanStack Start's SSR pattern has the root route's `shellComponent` render the entire `<html><head>...<body>...</body></html>` document, because in SSR the server *owns* the document. If you add a `shellComponent` to `__root.tsx` while still deploying as a static SPA, you get a second `<html>` document rendered *inside* `index.html`'s `<div id="root">` — browsers can't nest `<html>` tags, so the browser's parser silently reparents the DOM, React's view of the tree stops matching reality, and the page hard-freezes on the very next re-render (which in practice meant: the moment a user typed a single character into the signup form). This exact bug shipped once and took a full debugging session to trace back to `shellComponent`. If you ever want real SSR, it needs the `tanstackStart()` Vite plugin, a real server entry point, and a hosting target that runs Node (not a static-file host like Netlify's SPA mode) — that's a deliberate migration, not a one-line addition to `__root.tsx`.
+
+---
+
+## 6. Further reading
+
+- [README.md](../README.md) — setup, directory structure, tech stack.
+- [SUPABASE_GUIDE.md](SUPABASE_GUIDE.md) — schema, RLS, security-definer functions, storage, migrations.

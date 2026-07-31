@@ -1,165 +1,158 @@
-# Research Connect (RAVS)
+# RAVS — Research Attendance & Verification System
 
-> **Research Attendance & Verification System**  
-> A modern, full-stack digital platform for verifying academic research attendance, approving work sessions, and managing laboratory projects.
+> A digital replacement for paper lab registers: students log research work, faculty verify it, and attendance is derived from what's actually been approved.
 
 ---
 
 ## 📌 Overview
 
-**Research Connect (RAVS)** replaces manual paper registers and spreadsheets in academic research labs. It allows students to log research hours with verified check-in/out timestamps, enables faculty to review and approve work submissions, and empowers administrators to generate semester attendance reports.
+RAVS lets students check in/out of research **events** with a live timer, upload files with a comment for faculty to review, and see their approved hours. Faculty create and supervise events, approve or reject submitted work sessions and file uploads (each with their own remarks), and manage who's enrolled. Admins can additionally change anyone's role.
 
-### Key Goals
+### What it actually does today
 
-- ⏱️ **Eliminate Manual Registers:** Digital check-in/check-out timers with automated session duration calculation.
-- 📝 **Work Verification & File Submissions:** Students submit rich work notes and upload document proof (PDFs, images, ZIPs) for faculty review.
-- 👥 **Event Members & Role Management:** Discord-style event roster sidebar with live admin role updates.
-- ✅ **Faculty Approvals:** Faculty review, approve, or reject sessions and submitted files with custom remarks.
-- 📊 **Automated Attendance:** Calculate total verified research hours and generate percentage reports.
-- 🔐 **Role-Based Security:** Secure Row-Level Security (RLS) policies for **Student**, **Faculty**, and **Head Admin** roles.
+- ⏱️ **Check-in / check-out timer** — one active session per student at a time, with automatic duration tracking.
+- 📎 **File submissions with review** — members upload a file + comment for an event; the event's faculty approves or rejects it with their own comment.
+- 👥 **Per-event members sidebar** — a Discord-style roster scoped to each event's actual participants (not a platform-wide user list). Admins get an inline role selector per person.
+- ✅ **Session approvals** — faculty review submitted work sessions and approve/reject with remarks.
+- 📊 **Attendance history** — a log of completed sessions and their approval status, per user.
+- 🔐 **Role-based access** — three roles (`student`, `faculty`, `admin`), enforced with PostgreSQL Row-Level Security, not just UI checks.
+- 🎓 **Self-service faculty** — anyone can become faculty for an event by creating it; there's no signup role picker or manual approval step for that.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend & UI
+- **Framework:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/), running as a plain client-side SPA
+- **Routing:** [TanStack Router](https://tanstack.com/router) (file-based, client-side only — see note below)
+- **Data fetching:** [TanStack Query](https://tanstack.com/query)
+- **UI:** [Tailwind CSS v4](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/) primitives (shadcn/ui style), [Lucide](https://lucide.dev/) icons, [Sonner](https://sonner.emilkowal.ski/) for toasts
+- **Backend:** [Supabase](https://supabase.com/) — PostgreSQL, Auth, and Storage. No custom server; the client talks to Supabase directly, secured by RLS.
 
-- **Framework:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Routing:** [TanStack Router](https://tanstack.com/router) (File-based type-safe routing)
-- **State & Data Fetching:** [TanStack Query](https://tanstack.com/query)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) + [Radix UI](https://www.radix-ui.com/)
-- **Forms & Validation:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-- **Charts & Icons:** [Recharts](https://recharts.org/) + [Lucide React](https://lucide.dev/)
-
-### Backend & Database
-
-- **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL + Supabase Auth)
-- **Security:** PostgreSQL Row Level Security (RLS) + RBAC Triggers
-- **Storage:** Supabase Storage Bucket (`work-submissions`)
+> **Note on unused scaffolding:** `package.json` and `src/` still contain `@tanstack/react-start`, `src/server.ts`, and `src/start.ts` from an earlier SSR-based setup. The app does **not** run in SSR mode — `vite.config.ts` only wires up the plain `@tanstack/react-router` plugin, and `netlify.toml` builds and deploys it as a static SPA (`vite build` → `dist/`, with an SPA fallback redirect). Don't add `shellComponent`/SSR-only APIs to `__root.tsx` — that combination previously caused a real production bug (a duplicated `<html>` document nested inside `index.html`'s `<div id="root">`, which froze the page on the first re-render). Similarly, `react-hook-form`, `zod`, and `recharts` are installed (part of the full shadcn/ui component set) but none of the app's actual forms or dashboard stats use them — forms use plain `useState`, and there are no charts.
 
 ---
 
-## 👥 User Roles & Permissions
+## 👥 Roles & Permissions
 
-| Feature / Action                     | Student | Faculty | Head Admin |
-| :----------------------------------- | :-----: | :-----: | :--------: |
-| **Check In / Check Out**             |   ✅    |   ❌    |     ❌     |
-| **Submit Work Proof & Attachments**  |   ✅    |   ❌    |     ❌     |
-| **View Personal Attendance & Hours** |   ✅    |   ✅    |     ✅     |
-| **Review & Approve/Reject Sessions** |   ❌    |   ✅    |     ✅     |
-| **Review & Download Submissions**    |   ❌    |   ✅    |     ✅     |
-| **Create & Archive Events**          |   ❌    |   ✅    |     ✅     |
-| **Manage Roster Roles in Events**    |   ❌    |   ❌    |     ✅     |
-| **Manage Users & Global Roles**      |   ❌    |   ❌    |     ✅     |
+Everyone signs up as `student` (no role picker at signup, no Google/social login). The only way to become `faculty` is to create an event — the app grants it automatically at that point. Only an existing `admin` can promote/demote anyone via the per-event members sidebar; there's no self-service path to `admin`.
+
+| Action | Student | Faculty | Admin |
+| :--- | :---: | :---: | :---: |
+| Check in / check out of an event | ✅ (if enrolled) | — | — |
+| Upload a file + comment to an event | ✅ (if enrolled) | — | — |
+| Review submissions & sessions (approve/reject + comment) | ❌ | ✅ (events they created) | ✅ (any event) |
+| Create an event (becomes its faculty) | ✅ → becomes faculty | ✅ | ✅ |
+| Remove a member from an event's roster | ❌ | ✅ (events they created) | ✅ (any event) |
+| Change anyone's global role | ❌ | ❌ | ✅ |
+| View own attendance history | ✅ | ✅ | ✅ |
+
+"Events they created" means the RLS policies check `projects.faculty_id = auth.uid()` — a faculty account only has review/management authority over events it owns, not every event on the platform.
 
 ---
 
-## 📂 Project Architecture & Directory Structure
+## 📂 Directory Structure
 
 ```text
 research-connect-main/
-├── docs/                             # Comprehensive Documentation Guides
-│   └── SUPABASE_GUIDE.md             # Supabase Schema, RLS & CLI setup
+├── docs/
+│   ├── PROJECT_ARCHITECTURE.md        # Frontend structure & data flow
+│   └── SUPABASE_GUIDE.md              # Schema, RLS, functions, migrations
 ├── src/
-│   ├── components/                   # Reusable UI & Layout Components
-│   │   └── ui/                       # Radix UI + Tailwind primitives
-│   ├── hooks/                        # Custom React Hooks
-│   ├── lib/                          # Utility & Supabase Client instances
-│   ├── routes/                       # TanStack File-Based Routes
-│   │   ├── _authenticated/           # Protected App Routes
-│   │   │   ├── dashboard.tsx         # Dashboard per User Role
-│   │   │   ├── projects.index.tsx    # Projects Overview
-│   │   │   ├── projects.$id.tsx      # Project Workspace & Timer
-│   │   │   ├── approvals.tsx         # Faculty Review Queue
-│   │   │   ├── attendance.tsx        # Attendance Analytics & Reports
-│   │   │   └── profile.tsx           # User Profile Settings
-│   │   ├── auth.tsx                  # Sign In / Sign Up
-│   │   └── __root.tsx                # App Shell Layout
-│   ├── main.tsx                      # Vite Application Entrypoint
-│   └── styles.css                    # Tailwind CSS imports & theme definitions
+│   ├── components/
+│   │   ├── app-shell.tsx              # Header, nav, sign-out
+│   │   ├── session-widget.tsx         # Check-in/out timer widget
+│   │   └── ui/                        # shadcn/ui (Radix + Tailwind) primitives
+│   ├── integrations/supabase/
+│   │   ├── client.ts                  # Browser Supabase client (anon key)
+│   │   └── types.ts                   # Hand-maintained DB types (see note below)
+│   ├── lib/
+│   │   ├── auth.tsx                   # AuthProvider/useAuth — session, role, profile
+│   │   ├── people.ts                  # attachStudentNames() — joins names/roles onto rows
+│   │   └── session-utils.ts           # Duration/hour formatting, status colors
+│   ├── routes/
+│   │   ├── __root.tsx                 # Root layout — QueryClientProvider, AuthProvider
+│   │   ├── index.tsx                  # Public landing page
+│   │   ├── auth.tsx                   # Sign in / create account
+│   │   └── _authenticated/            # Everything behind the auth guard
+│   │       ├── route.tsx              # Redirects to /auth if not signed in; renders AppShell
+│   │       ├── dashboard.tsx          # Role-specific home (student vs faculty view)
+│   │       ├── projects.index.tsx     # Events list + "Create event" dialog
+│   │       ├── projects.$id.tsx       # Event detail: stats, submissions, sessions, members sidebar
+│   │       ├── approvals.tsx          # Faculty queue for pending work sessions
+│   │       ├── attendance.tsx         # Completed session history
+│   │       └── profile.tsx            # Name/college editing
+│   └── main.tsx                       # SPA entry point (mounts into index.html's #root)
 ├── supabase/
-│   ├── migrations/                   # PostgreSQL Migration Scripts
-│   └── config.toml                   # Local Supabase CLI configuration
-├── .env                              # Environment Variables
-├── package.json                      # Project Dependencies & Scripts
-└── vite.config.ts                    # Vite Configuration
+│   ├── migrations/                    # Applied in order via `supabase db push`
+│   └── config.toml                    # Local `supabase start` config only — not used in production
+├── index.html                         # Static HTML shell the SPA mounts into
+└── vite.config.ts
 ```
+
+> `src/integrations/supabase/types.ts` is normally auto-generated by `supabase gen types typescript`, but is currently maintained by hand to match the migrations. Regenerate it (or update it manually) whenever you add a migration that changes a table or function signature.
 
 ---
 
-## ⚡ Getting Started (Local Development)
+## ⚡ Getting Started
 
 ### 1. Prerequisites
 
-- **Node.js** `v18+` or **Bun** / **npm**
-- **Docker Desktop** _(Optional: Only if running Supabase CLI locally)_
+- Node.js 18+
+- A Supabase project (free tier is fine)
 
-### 2. Installation
-
-Clone the repository and install dependencies:
+### 2. Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/research-connect.git
+git clone <this-repo-url>
 cd research-connect-main
-
-# Install dependencies
 npm install
 ```
 
-### 3. Environment Variables
+### 3. Environment variables
 
-Create a `.env` file in the root directory:
+Create `.env` in the project root:
 
 ```env
-SUPABASE_PROJECT_ID="your_supabase_project_id"
-SUPABASE_PUBLISHABLE_KEY="your_supabase_publishable_key"
-SUPABASE_URL="https://your_supabase_project_id.supabase.co"
-
-VITE_SUPABASE_PROJECT_ID="your_supabase_project_id"
-VITE_SUPABASE_PUBLISHABLE_KEY="your_supabase_publishable_key"
-VITE_SUPABASE_URL="https://your_supabase_project_id.supabase.co"
+VITE_SUPABASE_PROJECT_ID="your-project-ref"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-public-key"
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co"
 ```
 
-### 4. Start Development Server
+Only `VITE_`-prefixed variables are read by the app (Vite inlines them into the client bundle, so they're public — never put a service role key or any real secret in `.env` with a `VITE_` prefix).
+
+### 4. Run
 
 ```bash
 npm run dev
 ```
 
-Open your browser at `http://localhost:5173`.
+Open `http://localhost:5173`.
 
----
+### 5. Apply the database schema
 
-## 🗄️ Database & Security Setup
-
-The application connects to Supabase PostgreSQL. Database tables and security policies are applied via migration files in `supabase/migrations/`.
-
-To apply pending database migrations to your cloud instance:
+Point the Supabase CLI at your project and push the migrations:
 
 ```bash
-# Link local CLI to Supabase Cloud
-npx supabase link --project-ref your_supabase_project_id
-
-# Push database schema migrations
+npx supabase login
+npx supabase link --project-ref your-project-ref
 npx supabase db push
 ```
 
+See [docs/SUPABASE_GUIDE.md](docs/SUPABASE_GUIDE.md) for the full schema, RLS policies, and required Auth dashboard settings (email confirmation is off by default in this app — see below).
+
+### 6. Email confirmation
+
+Signup runs with **email confirmation disabled** (Supabase Dashboard → Authentication → Sign In / Providers → Email → "Confirm email" off), so account creation doesn't depend on any outbound email delivery or SMTP setup. If you want confirmation emails, you'll need to configure a custom SMTP provider yourself and verify a real domain with it — a `resend.dev`-style sandbox sender can only deliver to your own inbox, not to real users.
+
 ---
 
-## 📧 Email Confirmation
+## 📖 Further Reading
 
-Signup currently runs with email confirmation disabled (Authentication > Sign In / Providers > Email in the Supabase Dashboard), so account creation doesn't depend on any outbound email delivery.
-
----
-
-## 📖 Additional Documentation
-
-- 🏗️ [Complete System Architecture & Developer Guide](docs/PROJECT_ARCHITECTURE.md)
-- 📚 [Complete Supabase Setup & Architecture Guide](docs/SUPABASE_GUIDE.md)
+- [docs/PROJECT_ARCHITECTURE.md](docs/PROJECT_ARCHITECTURE.md) — frontend structure, auth/role flow, and the data flow between the app and Supabase.
+- [docs/SUPABASE_GUIDE.md](docs/SUPABASE_GUIDE.md) — full schema, RLS policies, security-definer functions, storage bucket setup, and the CLI migration workflow.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)
