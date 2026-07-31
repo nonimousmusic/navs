@@ -12,7 +12,6 @@ graph TD
     Client -->|Supabase JS Client| Auth[Supabase Auth Engine]
     Client -->|PostgreSQL Queries via RLS| DB[(Supabase PostgreSQL Database)]
     Client -->|File Storage| Storage[Supabase Storage Buckets]
-    Auth -->|Custom SMTP| Resend[Resend Email Server]
 ```
 
 - **Frontend:** Built with **React 19**, **Vite**, **TanStack Router**, **TanStack Query**, and **Tailwind CSS v4**.
@@ -136,5 +135,4 @@ The repository contains documentation covering all aspects of the application:
 | :------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
 | 📘 **[README.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/README.md)**                                                 | Main project overview, features, quick start & role permissions.       |
 | 🛡️ **[docs/SUPABASE_GUIDE.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/docs/SUPABASE_GUIDE.md)**                       | Full database schema, RLS policies, migrations & CLI tools.            |
-| ✉️ **[docs/SUPABASE_SMTP_RATE_LIMITS.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/docs/SUPABASE_SMTP_RATE_LIMITS.md)** | Resend SMTP setup & Supabase authentication rate limits guide.         |
 | 🏗️ **[docs/PROJECT_ARCHITECTURE.md](file:///c:/Users/admin/Desktop/work/ravs/research-connect-main/docs/PROJECT_ARCHITECTURE.md)**           | Complete developer architecture, sequence diagrams & folder structure. |

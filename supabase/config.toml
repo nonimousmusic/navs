@@ -6,12 +6,3 @@ token_verifications = 300
 sign_ins = 300
 token_refreshes = 1500
 anonymous_users = 300
-
-[auth.smtp]
-enabled = true
-host = "smtp.resend.com"
-port = 465
-user = "resend"
-pass = "your_resend_api_key"
-admin_email = "onboarding@resend.dev"
-sender_name = "Research Connect"

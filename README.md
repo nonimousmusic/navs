@@ -36,7 +36,6 @@
 - **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL + Supabase Auth)
 - **Security:** PostgreSQL Row Level Security (RLS) + RBAC Triggers
 - **Storage:** Supabase Storage Bucket (`work-submissions`)
-- **Email Delivery:** Custom SMTP via [Resend](https://resend.com)
 
 ---
 
@@ -60,8 +59,7 @@
 ```text
 research-connect-main/
 ├── docs/                             # Comprehensive Documentation Guides
-│   ├── SUPABASE_GUIDE.md             # Supabase Schema, RLS & CLI setup
-│   └── SUPABASE_SMTP_RATE_LIMITS.md  # Resend SMTP & Auth Rate Limit Guide
+│   └── SUPABASE_GUIDE.md             # Supabase Schema, RLS & CLI setup
 ├── src/
 │   ├── components/                   # Reusable UI & Layout Components
 │   │   └── ui/                       # Radix UI + Tailwind primitives
@@ -149,16 +147,9 @@ npx supabase db push
 
 ---
 
-## 📧 Email & Rate Limits Configuration
+## 📧 Email Confirmation
 
-To prevent signup rate-limiting (`429 Too Many Requests`), the project uses **Resend Custom SMTP**:
-
-- **Host:** `smtp.resend.com`
-- **Port:** `465` (SSL/TLS)
-- **Username:** `resend`
-- **Email Rate Limit:** Set to `300` emails/hr in Supabase Dashboard.
-
-For step-by-step instructions on managing rate limits and email delivery, see [docs/SUPABASE_SMTP_RATE_LIMITS.md](docs/SUPABASE_SMTP_RATE_LIMITS.md).
+Signup currently runs with email confirmation disabled (Authentication > Sign In / Providers > Email in the Supabase Dashboard), so account creation doesn't depend on any outbound email delivery.
 
 ---
 
@@ -166,7 +157,6 @@ For step-by-step instructions on managing rate limits and email delivery, see [d
 
 - 🏗️ [Complete System Architecture & Developer Guide](docs/PROJECT_ARCHITECTURE.md)
 - 📚 [Complete Supabase Setup & Architecture Guide](docs/SUPABASE_GUIDE.md)
-- ✉️ [Supabase Auth Rate Limits & Resend SMTP Setup Guide](docs/SUPABASE_SMTP_RATE_LIMITS.md)
 
 ---
 

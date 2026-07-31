@@ -77,20 +77,9 @@ Data security is enforced using PostgreSQL **Row Level Security (RLS)** policies
 
 ---
 
-## 4. Authentication, Custom SMTP & Rate Limits
+## 4. Authentication & Rate Limits
 
-### Custom SMTP Configuration (Resend)
-
-To prevent signup failures and bypass Supabase's default 2 email/hour cap:
-
-1. Navigate to **Supabase Dashboard** > **Project Settings (⚙️)** > **Authentication** > **SMTP Settings**.
-2. Enable **Custom SMTP** with the following values:
-   - **Host:** `smtp.resend.com`
-   - **Port:** `465` (SSL/TLS)
-   - **Username:** `resend`
-   - **Password:** _(Your Resend API Key: `re_SAG9...`)_
-   - **Sender Email:** `onboarding@resend.dev` _(or verified domain)_
-   - **Sender Name:** `Research Connect`
+Signup currently runs with email confirmation disabled (Authentication > Sign In / Providers > Email), so no outbound email is required for accounts to work.
 
 ### Auth Rate Limits
 
