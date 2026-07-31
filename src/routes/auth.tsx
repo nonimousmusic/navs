@@ -263,7 +263,8 @@ function AuthPage() {
                   Create account
                 </Button>
                 <p className="text-center text-xs text-muted-foreground mt-2">
-                  Already have an account? Use the <strong className="font-semibold text-foreground">Sign in</strong> tab.
+                  Already have an account? Use the{" "}
+                  <strong className="font-semibold text-foreground">Sign in</strong> tab.
                 </p>
               </form>
             </TabsContent>
